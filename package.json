@@ -1,0 +1,58 @@
+{
+  "name": "omni-viewer-obsidian",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for viewing audio, image, video, archive, csv, automotive, office, PDF and many more file formats.",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/battlecook/omni-viewer-obsidian.git"
+  },
+  "license": "MIT",
+  "scripts": {
+    "assets": "node scripts/build-assets.mjs",
+    "dev": "npm run assets && node esbuild.config.mjs",
+    "build": "npm run assets && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "typecheck": "tsc -noEmit -skipLibCheck",
+    "deploy": "npm run build && PLUGIN_DIR=\"${OBSIDIAN_VAULT:-$HOME/Documents/Obsidian Vault}/.obsidian/plugins/omni-viewer\" && mkdir -p \"$PLUGIN_DIR\" && cp main.js manifest.json styles.css \"$PLUGIN_DIR/\" && echo \"Deployed to $PLUGIN_DIR\""
+  },
+  "keywords": [
+    "obsidian",
+    "viewer",
+    "media",
+    "audio",
+    "video",
+    "image",
+    "archive",
+    "pdf",
+    "csv",
+    "excel",
+    "word",
+    "powerpoint",
+    "hwp",
+    "psd",
+    "parquet",
+    "shapefile",
+    "hdf5",
+    "mat"
+  ],
+  "devDependencies": {
+    "@types/node": "^16.18.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.21.5",
+    "obsidian": "^1.5.7",
+    "tslib": "^2.6.2",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "hwp.js": "^0.0.3",
+    "hyparquet": "^1.21.0",
+    "hyparquet-compressors": "^1.1.1",
+    "jszip": "^3.10.1",
+    "music-metadata": "^11.8.3",
+    "pdf-lib": "^1.17.1",
+    "proj4": "^2.20.9",
+    "shapefile": "^0.6.6",
+    "xlsx": "^0.18.5",
+    "yaml": "^2.8.3"
+  }
+}

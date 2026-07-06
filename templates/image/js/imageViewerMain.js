@@ -1,0 +1,347 @@
+console.log('Image viewer script loading...');
+
+const vscode = acquireVsCodeApi();
+
+console.log('VSCode API acquired');
+
+// Import modules
+import { ImageFilters } from './imageFilters.js';
+import { ImageEditMode } from './ImageEditMode/index.js';
+import { ImageUtils } from './imageUtils.js';
+import { ImageSave } from './imageSave.js';
+
+// Image state
+let currentZoom = 100;
+let currentRotation = 0;
+let isFlippedHorizontal = false;
+let isFlippedVertical = false;
+let isGridVisible = false;
+let gridCellWidth = 32;
+let gridCellHeight = 32;
+let originalWidth = 0;
+let originalHeight = 0;
+let imageFormat = '';
+let fileSize = '';
+
+// DOM elements
+const image = document.getElementById('image');
+const imageWrapper = document.getElementById('imageWrapper');
+const loadingDiv = document.getElementById('loading');
+const errorDiv = document.getElementById('error');
+const fileInfoDiv = document.getElementById('fileInfo');
+const sizeInfoDiv = document.getElementById('sizeInfo');
+const formatInfoDiv = document.getElementById('formatInfo');
+const fileSizeInfoDiv = document.getElementById('fileSizeInfo');
+const zoomInBtn = document.getElementById('zoomIn');
+const zoomOutBtn = document.getElementById('zoomOut');
+const rotateBtn = document.getElementById('rotate');
+const flipHorizontalBtn = document.getElementById('flipHorizontal');
+const flipVerticalBtn = document.getElementById('flipVertical');
+const resetBtn = document.getElementById('reset');
+const fitToScreenBtn = document.getElementById('fitToScreen');
+const saveFilteredBtn = document.getElementById('saveFiltered');
+const toggleGridBtn = document.getElementById('toggleGrid');
+const gridOverlay = document.getElementById('gridOverlay');
+const gridCellWidthInput = document.getElementById('gridCellWidth');
+const gridCellHeightInput = document.getElementById('gridCellHeight');
+
+// Initialize modules
+const imageFilters = new ImageFilters(image);
+const imageEditMode = new ImageEditMode(image, imageWrapper);
+const imageUtils = new ImageUtils();
+const imageSave = new ImageSave(image, vscode, imageFilters);
+
+// Set up cross-references
+imageFilters.imageEditMode = imageEditMode;
+
+// Set up callback for log messages
+imageEditMode.onLogMessage = (message) => {
+    vscode.postMessage({ command: 'log', text: message });
+};
+
+// Initialize the image viewer
+function initImageViewer() {
+    console.log('Initializing image viewer...');
+    
+    // Set up event listeners
+    setupEventListeners();
+    imageEditMode.setupEventListeners();
+    
+    console.log('Event listeners setup complete');
+    
+    // Load image
+    image.onload = function() {
+        originalWidth = image.naturalWidth;
+        originalHeight = image.naturalHeight;
+        
+        // Get image format from file extension
+        const fileName = '{{fileName}}';
+        const extension = fileName.split('.').pop().toUpperCase();
+        imageFormat = extension;
+        
+        // Get file size from template variable
+        fileSize = '{{fileSize}}';
+        
+        loadingDiv.style.display = 'none';
+        imageWrapper.style.display = 'block';
+        fileInfoDiv.style.display = 'flex';
+        
+        updateImageInfo();
+        fitToScreen();
+        
+        // Setup edit canvas after image is loaded
+        setTimeout(() => {
+            imageEditMode.setupEditCanvas();
+        }, 200);
+        
+        vscode.postMessage({ command: 'log', text: 'Image loaded successfully' });
+    };
+    
+    image.onerror = function() {
+        loadingDiv.style.display = 'none';
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Error loading image file';
+        vscode.postMessage({ command: 'error', text: 'Failed to load image' });
+    };
+
+    // If the image already finished loading before the handlers were
+    // attached (common with data: URLs rendered inside an iframe), the
+    // load/error events have already fired — trigger the handlers manually.
+    if (image.complete) {
+        if (image.naturalWidth > 0) {
+            image.onload();
+        } else {
+            image.onerror();
+        }
+    }
+}
+
+function setupEventListeners() {
+    // Zoom controls
+    zoomInBtn.addEventListener('click', () => {
+        currentZoom = Math.min(500, currentZoom + 25);
+        updateZoom();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        currentZoom = Math.max(10, currentZoom - 25);
+        updateZoom();
+    });
+
+    // Rotation controls
+    rotateBtn.addEventListener('click', () => {
+        currentRotation = (currentRotation + 90) % 360;
+        updateTransform();
+    });
+
+    // Flip controls
+    flipHorizontalBtn.addEventListener('click', () => {
+        isFlippedHorizontal = !isFlippedHorizontal;
+        updateTransform();
+    });
+
+    flipVerticalBtn.addEventListener('click', () => {
+        isFlippedVertical = !isFlippedVertical;
+        updateTransform();
+    });
+
+    // Reset and fit controls
+    resetBtn.addEventListener('click', () => {
+        resetImage();
+    });
+
+    fitToScreenBtn.addEventListener('click', () => {
+        fitToScreen();
+    });
+
+    toggleGridBtn.addEventListener('click', () => {
+        toggleGrid();
+    });
+
+    gridCellWidthInput.addEventListener('input', () => {
+        updateGridSizeFromInputs();
+    });
+
+    gridCellHeightInput.addEventListener('input', () => {
+        updateGridSizeFromInputs();
+    });
+
+    gridCellWidthInput.addEventListener('change', () => {
+        normalizeGridSizeInputs();
+    });
+
+    gridCellHeightInput.addEventListener('change', () => {
+        normalizeGridSizeInputs();
+    });
+
+    // Save image (with or without edit elements)
+    saveFilteredBtn.addEventListener('click', () => {
+        const elements = imageEditMode.getAllElements();
+        if (elements.length > 0) {
+            // If there are edit elements, save with them
+            imageSave.saveEditedImage(elements, originalWidth, originalHeight, currentRotation, isFlippedHorizontal, isFlippedVertical, imageFilters.getFilterString());
+        } else {
+            // If no edit elements, save filtered image only
+            imageSave.saveFilteredImage(originalWidth, originalHeight, currentRotation, isFlippedHorizontal, isFlippedVertical, imageFilters.getFilterString());
+        }
+    });
+
+    // Edit mode toggle is now handled by ImageEditMode class
+
+    // Filter controls
+    imageFilters.setupEventListeners();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case '+':
+            case '=':
+                e.preventDefault();
+                zoomInBtn.click();
+                break;
+            case '-':
+                e.preventDefault();
+                zoomOutBtn.click();
+                break;
+            case '0':
+                e.preventDefault();
+                resetBtn.click();
+                break;
+            case 'f':
+                e.preventDefault();
+                fitToScreenBtn.click();
+                break;
+            case 'g':
+                if (!e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    toggleGridBtn.click();
+                }
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                rotateBtn.click();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                rotateBtn.click();
+                break;
+            case 's':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    saveFilteredBtn.click();
+                }
+                break;
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        updateGridOverlay();
+    });
+}
+
+function updateZoom() {
+    updateTransform();
+}
+
+function updateTransform() {
+    const scale = currentZoom / 100;
+    const rotation = currentRotation;
+    const flipH = isFlippedHorizontal ? -1 : 1;
+    const flipV = isFlippedVertical ? -1 : 1;
+    const transform = `scale(${scale * flipH}, ${scale * flipV}) rotate(${rotation}deg)`;
+    
+    image.style.transform = transform;
+    gridOverlay.style.transform = transform;
+    updateGridOverlay();
+    
+    // Update edit canvas if in edit mode
+    if (imageEditMode.isEditMode) {
+        imageEditMode.setupEditCanvas();
+    }
+}
+
+function updateGridOverlay() {
+    gridOverlay.style.width = `${image.offsetWidth}px`;
+    gridOverlay.style.height = `${image.offsetHeight}px`;
+
+    const cellDisplayWidth = originalWidth > 0
+        ? Math.max(1, image.offsetWidth * gridCellWidth / originalWidth)
+        : gridCellWidth;
+    const cellDisplayHeight = originalHeight > 0
+        ? Math.max(1, image.offsetHeight * gridCellHeight / originalHeight)
+        : gridCellHeight;
+
+    gridOverlay.style.setProperty('--grid-cell-display-width', `${cellDisplayWidth}px`);
+    gridOverlay.style.setProperty('--grid-cell-display-height', `${cellDisplayHeight}px`);
+}
+
+function toggleGrid() {
+    isGridVisible = !isGridVisible;
+    gridOverlay.classList.toggle('active', isGridVisible);
+    toggleGridBtn.classList.toggle('active', isGridVisible);
+    toggleGridBtn.setAttribute('aria-pressed', isGridVisible ? 'true' : 'false');
+    updateGridOverlay();
+}
+
+function updateGridSizeFromInputs() {
+    gridCellWidth = parseGridSizeValue(gridCellWidthInput.value, gridCellWidth);
+    gridCellHeight = parseGridSizeValue(gridCellHeightInput.value, gridCellHeight);
+    updateGridOverlay();
+}
+
+function normalizeGridSizeInputs() {
+    updateGridSizeFromInputs();
+    gridCellWidthInput.value = String(gridCellWidth);
+    gridCellHeightInput.value = String(gridCellHeight);
+}
+
+function parseGridSizeValue(value, fallback) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) {
+        return fallback;
+    }
+
+    return Math.min(9999, Math.max(1, parsed));
+}
+
+function updateImageInfo() {
+    sizeInfoDiv.textContent = `${originalWidth}×${originalHeight}`;
+    formatInfoDiv.textContent = imageFormat;
+    fileSizeInfoDiv.textContent = fileSize;
+}
+
+function resetImage() {
+    currentZoom = 100;
+    currentRotation = 0;
+    isFlippedHorizontal = false;
+    isFlippedVertical = false;
+    
+    updateZoom();
+    updateImageInfo();
+    
+    // Reset filters
+    imageFilters.resetFilters();
+}
+
+function fitToScreen() {
+    const container = imageWrapper.parentElement;
+    const containerWidth = container.clientWidth - 40; // padding
+    const containerHeight = container.clientHeight - 40; // padding
+    
+    const scaleX = containerWidth / originalWidth;
+    const scaleY = containerHeight / originalHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+    
+    currentZoom = Math.round(scale * 100);
+    updateZoom();
+    updateImageInfo();
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded');
+    initImageViewer();
+});
+
+// Log to VSCode console
+vscode.postMessage({ command: 'log', text: 'Image viewer initialized' });

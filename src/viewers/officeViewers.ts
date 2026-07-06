@@ -1,0 +1,196 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { FileUtils } from '../utils/fileUtils';
+import { TemplateUtils } from '../utils/templateUtils';
+import { escapeJsonForHtmlScriptTag } from '../utils/htmlEscaping';
+import { ViewerDefinition } from '../viewerCore';
+
+export const excelViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.excelViewer',
+    displayName: 'Excel Viewer',
+    extensions: ['xlsx', 'xls'],
+    icon: 'sheet',
+    errorContent: {
+        title: 'Failed to load Excel file',
+        message: 'Unable to load the Excel file due to an error:',
+        icon: '📊'
+    },
+    async render(ctx) {
+        const excelContent = await FileUtils.readExcelFile(ctx.filePath);
+        const excelData = JSON.stringify(excelContent);
+
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'excel/excelViewer.html', {
+            fileName: ctx.fileName,
+            excelData: excelData
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};
+
+export const wordViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.wordViewer',
+    displayName: 'Word Viewer',
+    extensions: ['docx', 'doc'],
+    icon: 'file-type',
+    errorContent: {
+        title: 'Failed to load Word file',
+        message: 'Unable to load the file:',
+        icon: '📄'
+    },
+    async render(ctx) {
+        const wordContent = await FileUtils.readWordFile(ctx.filePath);
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'word/wordViewer.html', {
+            fileName: ctx.fileName,
+            wordContent: wordContent.renderer === 'legacy-html' ? (wordContent.htmlContent || '') : '',
+            fileSize: wordContent.fileSize || '',
+            wordConfigJson: Buffer.from(JSON.stringify({
+                renderer: wordContent.renderer,
+                docxBase64: wordContent.docxBase64,
+                htmlContent: wordContent.htmlContent,
+                sourceFormat: wordContent.sourceFormat,
+                wasConverted: wordContent.wasConverted
+            }), 'utf8').toString('base64')
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};
+
+export const pdfViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.pdfViewer',
+    displayName: 'PDF Editor',
+    extensions: ['pdf'],
+    icon: 'file-text',
+    errorContent: {
+        title: 'Failed to load PDF file',
+        message: 'Unable to load the PDF file due to an error:',
+        icon: '📄'
+    },
+    async render(ctx) {
+        const pdfBytes = await fs.promises.readFile(ctx.filePath);
+        const pdfBase64 = pdfBytes.toString('base64');
+        const pdfJsScriptUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.min.mjs'));
+        const pdfJsWorkerUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.worker.min.mjs'));
+
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'pdf/pdfViewer.html', {
+            fileName: ctx.fileName,
+            pdfBase64: pdfBase64,
+            pdfJsScriptUri: pdfJsScriptUri,
+            pdfJsWorkerUri: pdfJsWorkerUri
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};
+
+export const pptViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.pptViewer',
+    displayName: 'PowerPoint Viewer',
+    extensions: ['ppt', 'pptx'],
+    icon: 'presentation',
+    errorContent: {
+        title: 'Failed to load PowerPoint file',
+        message: 'Unable to parse and render the file:',
+        icon: '📽️'
+    },
+    async render(ctx) {
+        const pptContent = await FileUtils.readPresentationFile(ctx.filePath);
+        const pdfJsScriptUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.min.mjs'));
+        const pdfJsWorkerUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.worker.min.mjs'));
+
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'ppt/pptViewer.html', {
+            fileName: ctx.fileName,
+            fileSize: pptContent.fileSize,
+            totalSlides: String(pptContent.totalSlides),
+            presentationData: escapeJsonForHtmlScriptTag(JSON.stringify(pptContent)),
+            pdfJsScriptUri: pdfJsScriptUri,
+            pdfJsWorkerUri: pdfJsWorkerUri
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};
+
+function formatFileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+        return '';
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let size = bytes;
+    let unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+    }
+
+    const precision = size >= 100 || unitIndex === 0 ? 0 : 1;
+    return `${size.toFixed(precision)} ${units[unitIndex]}`;
+}
+
+export const hwpViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.hwpViewer',
+    displayName: 'HWP Viewer',
+    extensions: ['hwp', 'hwpx'],
+    icon: 'file-text',
+    errorContent: {
+        title: 'HWP 파일을 불러올 수 없습니다',
+        message: '파일을 로드하는 중 오류가 발생했습니다:',
+        icon: '📄',
+        lang: 'ko'
+    },
+    async render(ctx) {
+        const stats = await fs.promises.stat(ctx.filePath);
+        const payload = TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify({
+            fileName: ctx.fileName,
+            fileSize: formatFileSize(stats.size),
+            documentUri: ctx.host.asWebviewUri(ctx.filePath),
+            rhwpModuleUri: ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'hwp', 'vendor', 'rhwp', 'rhwp.js')),
+            rhwpWasmUri: ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'hwp', 'vendor', 'rhwp', 'rhwp_bg.wasm'))
+        }));
+
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'hwp/hwpViewer.html', {
+            fileName: ctx.fileName,
+            hwpPayload: payload,
+            fileSize: formatFileSize(stats.size)
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};
+
+export const psdViewer: ViewerDefinition = {
+    viewType: 'omni-viewer.psdViewer',
+    displayName: 'PSD Viewer',
+    extensions: ['psd'],
+    icon: 'image',
+    errorContent: {
+        title: 'Failed to load PSD file',
+        message: 'Unable to load the PSD file due to an error:',
+        icon: '🖼️'
+    },
+    async render(ctx) {
+        const buffer = await fs.promises.readFile(ctx.filePath);
+        const psdBase64 = buffer.toString('base64');
+        const fileSize = await FileUtils.getFileSize(ctx.filePath);
+
+        const agPsdScriptUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'psd', 'vendor', 'ag-psd.bundle.js'));
+
+        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'psd/psdViewer.html', {
+            fileName: ctx.fileName,
+            psdBase64,
+            fileSize,
+            agPsdScriptUri: agPsdScriptUri
+        });
+
+        ctx.host.setHtml(html);
+        ctx.host.setupDefaultMessages();
+    }
+};

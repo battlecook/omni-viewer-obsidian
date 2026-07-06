@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONL Viewer - {{fileName}}</title>
+    <link rel="stylesheet" href="css/jsonlViewer.css">
+</head>
+<body>
+    <div class="editor-container">
+        <div id="previewBanner" class="preview-banner hidden">
+            <div class="preview-banner-text" id="previewBannerText"></div>
+            <div class="preview-actions">
+                <button id="loadMoreButton" class="preview-load-button">Load 1MB More</button>
+                <button id="loadAllButton" class="preview-load-button secondary">Load All</button>
+            </div>
+        </div>
+        <div class="editor-content" id="editorContent">
+            <!-- JSONL lines will be rendered here -->
+        </div>
+    </div>
+
+    <!-- JSON Popup -->
+    <div id="jsonPopup" class="json-popup">
+        <div class="popup-content">
+            <div class="popup-header">
+                <div class="popup-controls">
+                    <button id="saveBtn" class="popup-btn primary" style="display: none;">Save</button>
+                    <button id="cancelBtn" class="popup-btn secondary" style="display: none;">Cancel</button>
+                </div>
+                <button id="closePopup" class="close-btn">&times;</button>
+            </div>
+            <pre id="jsonContent" class="json-content"></pre>
+            <textarea id="jsonEditArea" class="json-edit-area" placeholder="Edit JSON..."></textarea>
+        </div>
+    </div>
+
+    <!-- Custom Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="deleteMenuItem">
+            <span>🗑️</span>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <script>
+        // JSONL data from server
+        window.jsonlData = {{jsonlData}};
+    </script>
+    <script src="js/jsonlViewer.js"></script>
+</body>
+</html>

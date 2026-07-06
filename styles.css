@@ -1,0 +1,12 @@
+.omni-viewer-content {
+    padding: 0;
+    overflow: hidden;
+}
+
+.omni-viewer-content .omni-viewer-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background-color: transparent;
+}

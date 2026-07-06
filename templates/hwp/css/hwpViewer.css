@@ -1,0 +1,169 @@
+:root {
+    --bg-color: var(--vscode-editor-background, #1e1e1e);
+    --text-color: var(--vscode-editor-foreground, #d4d4d4);
+    --border-color: var(--vscode-panel-border, #3c3c3c);
+    --header-bg: var(--vscode-sideBar-background, #252526);
+    --button-bg: var(--vscode-button-secondaryBackground, #3a3d41);
+    --button-hover: var(--vscode-button-secondaryHoverBackground, #45494e);
+    --muted-color: var(--vscode-descriptionForeground, #8b8b8b);
+    --page-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%),
+        var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+}
+
+.container {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    height: 100%;
+}
+
+.header,
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--header-bg) 92%, transparent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.file-info,
+.view-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-info {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    color: var(--muted-color);
+    font-size: 12px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.separator {
+    opacity: 0.6;
+}
+
+.btn {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 12px;
+    transition: background 140ms ease, transform 140ms ease;
+}
+
+.btn:hover {
+    background: var(--button-hover);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-icon {
+    min-width: 34px;
+    padding-inline: 10px;
+    font-size: 16px;
+}
+
+.zoom-level {
+    min-width: 58px;
+    text-align: center;
+    color: var(--muted-color);
+    font-size: 12px;
+}
+
+.document-container {
+    position: relative;
+    overflow: auto;
+    padding: 28px 24px 48px;
+}
+
+.loading,
+.error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+
+.loading {
+    color: var(--muted-color);
+}
+
+.error {
+    display: none;
+    color: var(--vscode-errorForeground, #f48771);
+}
+
+.hwp-content {
+    display: flex;
+    justify-content: center;
+    transform-origin: top center;
+    transition: transform 160ms ease;
+}
+
+.hwp-viewport {
+    display: grid;
+    gap: 24px;
+    padding: 8px 0;
+}
+
+.rhwp-page {
+    display: block;
+    background: #ffffff;
+    border-radius: 4px;
+    box-shadow: var(--page-shadow);
+    overflow: hidden;
+}
+
+.rhwp-page-svg {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+}

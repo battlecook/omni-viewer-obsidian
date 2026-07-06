@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Viewer - {{fileName}}</title>
+    <link rel="stylesheet" href="css/audioViewer.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">🎵 {{fileName}}</div>
+            <div class="controls">
+                <button id="downloadBtn" class="btn download-btn" title="Download audio file">
+                    📥 Download
+                </button>
+                {{omniShareButtons}}
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="file-info" id="fileInfo" style="display: none;">
+                <div class="file-info-item">
+                    <div class="file-info-label">Duration</div>
+                    <div class="file-info-value" id="durationInfo">--:--</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Sample Rate</div>
+                    <div class="file-info-value" id="sampleRateInfo">--</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Channels</div>
+                    <div class="file-info-value" id="channelsInfo">--</div>
+                    <div class="file-info-subvalue" id="channelDetailsInfo" style="display: none;"></div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Bit Depth</div>
+                    <div class="file-info-value" id="bitDepthInfo">--</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">File Size</div>
+                    <div class="file-info-value" id="fileSizeInfo">--</div>
+                </div>
+                <div class="file-info-item">
+                    <div class="file-info-label">Format</div>
+                    <div class="file-info-value" id="formatInfo">--</div>
+                </div>
+            </div>
+
+            <div class="playback-controls">
+                <button id="playPause" class="btn">▶️</button>
+                <button id="stop" class="btn">⏹️</button>
+                
+                <div class="volume-control">
+                    <label>🔊</label>
+                    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="0.5">
+                </div>
+
+                <div class="control-group" id="loopControls" style="display: none;">
+                    <label>Loop:</label>
+                    <input type="checkbox" id="loopEnabled">
+                </div>
+
+                <div class="control-group" id="zoomControls" style="display: none;">
+                    <button id="zoomOut" class="btn zoom-btn" title="Zoom out (show more time)">−</button>
+                    <span id="zoomLevel" class="zoom-label">30s</span>
+                    <button id="zoomIn" class="btn zoom-btn" title="Zoom in (show less time)">+</button>
+                </div>
+
+                <div class="view-mode-control" id="visualizationMode" role="group" aria-label="Visualization mode">
+                    <button class="view-mode-btn active" data-view-mode="waveform" title="Waveform only" aria-label="Waveform only">
+                        <span class="view-mode-icon waveform-icon" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+                    </button>
+                    <button class="view-mode-btn" data-view-mode="spectrogram" title="Spectrogram only" aria-label="Spectrogram only">
+                        <span class="view-mode-icon spectrogram-icon" aria-hidden="true">
+                            <span></span><span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </span>
+                    </button>
+                    <button class="view-mode-btn" data-view-mode="both" title="Waveform and spectrogram" aria-label="Waveform and spectrogram">
+                        <span class="view-mode-icon both-icon" aria-hidden="true">
+                            <span class="mini-wave"><span></span><span></span><span></span></span>
+                            <span class="mini-spec"><span></span><span></span><span></span><span></span><span></span><span></span></span>
+                            <span class="both-slash"></span>
+                        </span>
+                    </button>
+                </div>
+
+                <div class="control-group" id="spectrogramScaleGroup" style="display: none;">
+                    <label>Spectrogram Scale:</label>
+                    <select id="spectrogramScale" class="scale-selector">
+                        <option value="linear">Linear</option>
+                        <option value="mel" selected>Mel</option>
+                        <option value="bark">Bark</option>
+                        <option value="erb">ERB</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="waveform-container">
+                <div id="loading" class="loading">
+                    <div>Loading audio file...</div>
+                    <div style="font-size: 12px; margin-top: 10px; color: var(--vscode-descriptionForeground);">
+                        Preloading audio file...
+                    </div>
+                </div>
+                <div id="error" class="error" style="display: none;"></div>
+                <div id="minimap" style="display: none;"></div>
+                <div id="timeline"></div>
+                <div id="waveform"></div>
+                <div id="spectrogram" style="display: none;"></div>
+                <div id="status" class="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script id="metadata-script" type="application/json">{{metadata}}</script>
+    <script id="precomputed-data" type="application/json">{
+        "mode": "{{mode}}",
+        "peaks": "{{peaks}}",
+        "duration": "{{duration}}",
+        "spectrogram": "{{spectrogram}}",
+        "sampleRate": "{{sampleRate}}"
+    }</script>
+    <script src="js/audioViewer.js"></script>
+</body>
+</html>
