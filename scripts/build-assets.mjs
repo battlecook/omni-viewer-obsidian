@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import zlib from "zlib";
 
 const rootDir = process.cwd();
 const generatedDir = path.join(rootDir, "src", "generated");
@@ -11,9 +12,7 @@ const binaryFiles = [
   "templates/hwp/vendor/rhwp/rhwp_bg.wasm",
 ];
 
-const extraTextFiles = [
-  "wasm/audio_engine.js",
-];
+const extraTextFiles = [];
 
 function normalizeKey(filePath) {
   return filePath.split(path.sep).join("/");
@@ -53,14 +52,18 @@ function textAssetEntries() {
     .sort()
     .map((file) => {
       const rel = normalizeKey(path.relative(rootDir, file));
-      return [rel, fs.readFileSync(file, "utf8")];
+      const gzipped = zlib.gzipSync(fs.readFileSync(file));
+      return [rel, gzipped.toString("base64")];
     });
 }
 
 function binaryAssetEntries() {
   return binaryFiles
     .filter((rel) => fs.existsSync(path.join(rootDir, rel)))
-    .map((rel) => [rel, fs.readFileSync(path.join(rootDir, rel)).toString("base64")]);
+    .map((rel) => {
+      const gzipped = zlib.gzipSync(fs.readFileSync(path.join(rootDir, rel)));
+      return [rel, gzipped.toString("base64")];
+    });
 }
 
 function renderRecord(entries) {

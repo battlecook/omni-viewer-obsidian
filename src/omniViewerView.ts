@@ -111,7 +111,6 @@ export class OmniViewerView extends FileView implements ViewerHost {
     }
 
     async onLoadFile(file: TFile): Promise<void> {
-        console.log(`[Omni Viewer] opening ${file.path} with ${this.definition.viewType}`);
         await this.renderFile(file);
     }
 

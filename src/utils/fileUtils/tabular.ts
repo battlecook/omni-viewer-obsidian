@@ -6,6 +6,9 @@ import { getFileSize } from './media';
 const DEFAULT_DELIMITER = ',';
 const PARQUET_PREVIEW_FILE_SIZE_MB = 50;
 const PARQUET_PREVIEW_ROW_COUNT = 10000;
+type JsonObject = Record<string, unknown>;
+type TableCell = unknown;
+type TableRow = TableCell[];
 
 export interface ParquetReadOptions {
     rowStart?: number;
@@ -14,11 +17,11 @@ export interface ParquetReadOptions {
 
 export interface ParquetFileData {
     headers: string[];
-    rows: any[][];
+    rows: TableRow[];
     totalRows: number;
     totalColumns: number;
     fileSize: string;
-    schema: any;
+    schema: unknown;
     isLimited?: boolean;
     limitMessage?: string;
     actualTotalRows?: number;
@@ -66,7 +69,7 @@ export function getDelimitedFileDelimiter(filePath: string, lines: string[] = []
 }
 
 export async function readJsonlFile(filePath: string): Promise<{
-    lines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }>;
+    lines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }>;
     totalLines: number;
     validLines: number;
     invalidLines: number;
@@ -83,7 +86,7 @@ export async function readJsonlFilePreview(
     filePath: string,
     previewBytes = 10 * 1024 * 1024
 ): Promise<{
-    lines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }>;
+    lines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }>;
     totalLines: number;
     validLines: number;
     invalidLines: number;
@@ -133,7 +136,7 @@ export async function readJsonlFilePreview(
 
 export async function readJsonFile(filePath: string): Promise<{
     formattedJson: string;
-    parsedJson: any;
+    parsedJson: unknown;
     fileSize: string;
 }> {
     const content = await fs.promises.readFile(filePath, 'utf-8');
@@ -161,13 +164,13 @@ export async function readParquetFile(filePath: string, options: ParquetReadOpti
     const { compressors } = await import('hyparquet-compressors');
     const asyncBuffer = await asyncBufferFromFile(filePath);
 
-    let schema: any = null;
-    let metadata: any = null;
+    let schema: unknown = null;
+    let metadata: unknown = null;
     let actualTotalRows: number | undefined;
     try {
-        metadata = await parquetMetadataAsync(asyncBuffer as any);
-        schema = parquetSchema(metadata);
-        if (metadata && metadata.num_rows) {
+        metadata = await parquetMetadataAsync(asyncBuffer);
+        schema = parquetSchema(metadata as Parameters<typeof parquetSchema>[0]);
+        if (isObject(metadata) && metadata.num_rows) {
             actualTotalRows = Number(metadata.num_rows);
         }
     } catch {
@@ -178,13 +181,13 @@ export async function readParquetFile(filePath: string, options: ParquetReadOpti
     const rowStart = Math.max(0, options.rowStart ?? 0);
     const defaultRowEnd = rowStart + PARQUET_PREVIEW_ROW_COUNT;
     const rowEnd = options.rowEnd ?? defaultRowEnd;
-    const readOptions: any = {
-        file: asyncBuffer as any,
+    const readOptions: Parameters<typeof parquetReadObjects>[0] = {
+        file: asyncBuffer,
         compressors
     };
 
     if (metadata) {
-        readOptions.metadata = metadata;
+        readOptions.metadata = metadata as Parameters<typeof parquetReadObjects>[0]['metadata'];
     }
 
     if (isLimited) {
@@ -192,17 +195,17 @@ export async function readParquetFile(filePath: string, options: ParquetReadOpti
         readOptions.rowEnd = rowEnd;
     }
 
-    const result = await parquetReadObjects(readOptions);
+    const result = await parquetReadObjects(readOptions) as unknown;
     const dataObjects = Array.isArray(result)
         ? result
-        : Array.isArray((result as any)?.data)
-            ? (result as any).data
-            : Array.isArray((result as any)?.rows)
-                ? (result as any).rows
+        : isObject(result) && Array.isArray(result.data)
+            ? result.data
+            : isObject(result) && Array.isArray(result.rows)
+                ? result.rows
                 : [];
 
     const headers: string[] = [];
-    if (dataObjects.length > 0 && dataObjects[0]) {
+    if (dataObjects.length > 0 && isObject(dataObjects[0])) {
         headers.push(...Object.keys(dataObjects[0]));
     } else if (schema) {
         headers.push(...extractColumnNames(schema));
@@ -215,8 +218,8 @@ export async function readParquetFile(filePath: string, options: ParquetReadOpti
     const columnLogicalTypes = collectColumnLogicalTypes(schema);
     const serializableSchema = schema ? convertParquetValue(schema) : {};
     const rows = dataObjects
-        .filter((row: any) => row && typeof row === 'object')
-        .map((row: any) => {
+        .filter(isObject)
+        .map((row): TableRow => {
             return headers.map((header) => {
                 const cell = row[header] !== undefined ? row[header] : null;
                 return convertParquetValue(cell, columnLogicalTypes.get(header));
@@ -251,10 +254,10 @@ export async function readParquetFile(filePath: string, options: ParquetReadOpti
 
 export async function readExcelFile(filePath: string): Promise<{
     sheetNames: string[];
-    sheets: Array<{
+        sheets: Array<{
         name: string;
         headers: string[];
-        rows: any[][];
+        rows: TableRow[];
         totalRows: number;
         totalColumns: number;
     }>;
@@ -284,7 +287,7 @@ function buildSheetSummary(name: string, worksheet: XLSX.WorkSheet | undefined) 
         return { name, headers: [], rows: [], totalRows: 0, totalColumns: 0 };
     }
 
-    const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+    const rawRows = XLSX.utils.sheet_to_json<TableRow>(worksheet, {
         header: 1,
         defval: '',
         raw: false
@@ -294,9 +297,9 @@ function buildSheetSummary(name: string, worksheet: XLSX.WorkSheet | undefined) 
         return { name, headers: [], rows: [], totalRows: 0, totalColumns: 0 };
     }
 
-    const headers = (rawRows[0] || []).map((cell: any) => cell === null || cell === undefined ? '' : String(cell));
-    const dataRows = rawRows.slice(1).map((row: any[]) =>
-        (Array.isArray(row) ? row : []).map((cell: any) => {
+    const headers = (rawRows[0] || []).map((cell) => cell === null || cell === undefined ? '' : String(cell));
+    const dataRows = rawRows.slice(1).map((row) =>
+        (Array.isArray(row) ? row : []).map((cell) => {
             if (cell === null || cell === undefined) return '';
             if (typeof cell === 'object' && cell instanceof Date) return cell.toISOString();
             return cell;
@@ -321,13 +324,13 @@ function buildSheetSummary(name: string, worksheet: XLSX.WorkSheet | undefined) 
 }
 
 function parseJsonlContent(content: string): {
-    lines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }>;
+    lines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }>;
     totalLines: number;
     validLines: number;
     invalidLines: number;
 } {
     const lines = content.split('\n').filter((line) => line.trim() !== '');
-    const parsedLines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }> = [];
+    const parsedLines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }> = [];
     let validLines = 0;
     let invalidLines = 0;
 
@@ -457,7 +460,7 @@ function parseDelimitedLine(line: string, delimiter: string): string[] {
     return result;
 }
 
-function convertParquetValue(value: any, columnType?: ParquetColumnType): any {
+function convertParquetValue(value: unknown, columnType?: ParquetColumnType): unknown {
     if (typeof value === 'bigint') {
         return value.toString();
     }
@@ -471,9 +474,9 @@ function convertParquetValue(value: any, columnType?: ParquetColumnType): any {
         return value.map((item) => convertParquetValue(item));
     }
     if (value && typeof value === 'object') {
-        const converted: any = {};
-        for (const key in value) {
-            converted[key] = convertParquetValue(value[key]);
+        const converted: JsonObject = {};
+        for (const [key, nestedValue] of Object.entries(value)) {
+            converted[key] = convertParquetValue(nestedValue);
         }
         return converted;
     }
@@ -485,51 +488,62 @@ interface ParquetColumnType {
     convertedType?: string;
 }
 
-function collectColumnLogicalTypes(schemaTree: any): Map<string, ParquetColumnType> {
+function collectColumnLogicalTypes(schemaTree: unknown): Map<string, ParquetColumnType> {
     const types = new Map<string, ParquetColumnType>();
     collectColumnLogicalTypesInto(schemaTree, types);
     return types;
 }
 
-function collectColumnLogicalTypesInto(schemaTree: any, types: Map<string, ParquetColumnType>): void {
-    if (!schemaTree) {
+function collectColumnLogicalTypesInto(schemaTree: unknown, types: Map<string, ParquetColumnType>): void {
+    if (!isObject(schemaTree)) {
         return;
     }
 
     const hasChildren = Array.isArray(schemaTree.children) && schemaTree.children.length > 0;
-    if (schemaTree.element && schemaTree.element.name && !hasChildren) {
+    const element = isObject(schemaTree.element) ? schemaTree.element : null;
+    if (element && typeof element.name === 'string' && !hasChildren) {
         const columnName = Array.isArray(schemaTree.path) && schemaTree.path.length > 0
-            ? schemaTree.path.join('.')
-            : schemaTree.element.name;
+            ? schemaTree.path.map((part) => String(part)).join('.')
+            : element.name;
+        const logicalType = isObject(element.logical_type) && typeof element.logical_type.type === 'string'
+            ? element.logical_type.type
+            : undefined;
         types.set(columnName, {
-            logicalType: schemaTree.element.logical_type?.type,
-            convertedType: schemaTree.element.converted_type
+            logicalType,
+            convertedType: typeof element.converted_type === 'string' ? element.converted_type : undefined
         });
     }
 
     if (hasChildren) {
-        schemaTree.children.forEach((child: any) => collectColumnLogicalTypesInto(child, types));
+        const children = Array.isArray(schemaTree.children) ? schemaTree.children : [];
+        children.forEach((child: unknown) => collectColumnLogicalTypesInto(child, types));
     }
 }
 
-function extractColumnNames(schemaTree: any): string[] {
-    if (!schemaTree) {
+function extractColumnNames(schemaTree: unknown): string[] {
+    if (!isObject(schemaTree)) {
         return [];
     }
 
     const names: string[] = [];
     const hasChildren = Array.isArray(schemaTree.children) && schemaTree.children.length > 0;
-    if (schemaTree.element && schemaTree.element.name && !hasChildren) {
+    const element = isObject(schemaTree.element) ? schemaTree.element : null;
+    if (element && typeof element.name === 'string' && !hasChildren) {
         if (Array.isArray(schemaTree.path) && schemaTree.path.length > 0) {
-            names.push(schemaTree.path.join('.'));
+            names.push(schemaTree.path.map((part) => String(part)).join('.'));
         } else {
-            names.push(schemaTree.element.name);
+            names.push(element.name);
         }
     }
 
     if (hasChildren) {
-        schemaTree.children.forEach((child: any) => names.push(...extractColumnNames(child)));
+        const children = Array.isArray(schemaTree.children) ? schemaTree.children : [];
+        children.forEach((child: unknown) => names.push(...extractColumnNames(child)));
     }
 
     return names;
+}
+
+function isObject(value: unknown): value is JsonObject {
+    return typeof value === 'object' && value !== null;
 }

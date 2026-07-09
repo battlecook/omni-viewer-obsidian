@@ -5,6 +5,7 @@ import * as shapefile from 'shapefile';
 
 type BBox = [number, number, number, number];
 type Position = number[];
+type JsonObject = Record<string, unknown>;
 type GeometryType =
     | 'Point'
     | 'MultiPoint'
@@ -13,6 +14,18 @@ type GeometryType =
     | 'Polygon'
     | 'MultiPolygon'
     | 'GeometryCollection';
+interface GeoJsonGeometry {
+    type: GeometryType;
+    coordinates?: unknown;
+    geometries?: GeoJsonGeometry[];
+    [key: string]: unknown;
+}
+
+interface GeoJsonFeature {
+    type: 'Feature';
+    properties: JsonObject;
+    geometry: GeoJsonGeometry | null;
+}
 
 export interface ShapefileReadOptions {
     featureStart?: number;
@@ -21,7 +34,7 @@ export interface ShapefileReadOptions {
 
 export interface ShapefileData {
     type: 'FeatureCollection';
-    features: any[];
+    features: GeoJsonFeature[];
     bbox: BBox | null;
     sourceBBox: BBox | null;
     fileSize: string;
@@ -59,11 +72,11 @@ export async function readShapefile(filePath: string, options: ShapefileReadOpti
     const prj = await readOptionalText(sidecars.prj.path);
     const cpg = (await readOptionalText(sidecars.cpg.path))?.trim();
     const projection = createProjection(prj, warnings);
-    const source = await shapefile.open(filePath, sidecars.dbf.exists ? sidecars.dbf.path : undefined, {
+    const source = await shapefile.open<GeoJsonFeature>(filePath, sidecars.dbf.exists ? sidecars.dbf.path : undefined, {
         encoding: cpg || undefined
     });
 
-    const features: any[] = [];
+    const features: GeoJsonFeature[] = [];
     const geometryTypes: Record<string, number> = {};
     const propertyNames = new Set<string>();
     let bbox: BBox | null = null;
@@ -250,15 +263,19 @@ function isWgs84Projection(prj: string): boolean {
     return /WGS[_\s]?84/i.test(prj) || /EPSG["']?\s*,\s*4326/i.test(prj);
 }
 
-function prepareFeature(feature: any, transform: ((position: Position) => Position) | null): any {
+function prepareFeature(feature: GeoJsonFeature, transform: ((position: Position) => Position) | null): GeoJsonFeature {
+    const properties = feature.properties && typeof feature.properties === 'object'
+        ? feature.properties
+        : {};
+    const geometry = isGeoJsonGeometry(feature.geometry) ? feature.geometry : null;
     return {
         type: 'Feature',
-        properties: feature.properties || {},
-        geometry: transform ? transformGeometry(feature.geometry, transform) : feature.geometry || null
+        properties,
+        geometry: transform && geometry ? transformGeometry(geometry, transform) : geometry
     };
 }
 
-function transformGeometry(geometry: any, transform: (position: Position) => Position): any {
+function transformGeometry(geometry: GeoJsonGeometry, transform: (position: Position) => Position): GeoJsonGeometry {
     if (!geometry) {
         return geometry;
     }
@@ -266,7 +283,7 @@ function transformGeometry(geometry: any, transform: (position: Position) => Pos
         return {
             ...geometry,
             geometries: Array.isArray(geometry.geometries)
-                ? geometry.geometries.map((child: any) => transformGeometry(child, transform))
+                ? geometry.geometries.map((child) => transformGeometry(child, transform))
                 : []
         };
     }
@@ -276,24 +293,36 @@ function transformGeometry(geometry: any, transform: (position: Position) => Pos
     };
 }
 
-function transformCoordinates(coordinates: any, geometryType: GeometryType, transform: (position: Position) => Position): any {
+function transformCoordinates(coordinates: unknown, geometryType: GeometryType, transform: (position: Position) => Position): unknown {
     switch (geometryType) {
     case 'Point':
-        return transform(coordinates);
+        return isPosition(coordinates) ? transform(coordinates) : coordinates;
     case 'MultiPoint':
     case 'LineString':
-        return coordinates.map((position: Position) => transform(position));
+        return Array.isArray(coordinates)
+            ? coordinates.map((position) => isPosition(position) ? transform(position) : position)
+            : coordinates;
     case 'MultiLineString':
     case 'Polygon':
-        return coordinates.map((line: Position[]) => line.map((position) => transform(position)));
+        return Array.isArray(coordinates)
+            ? coordinates.map((line) => Array.isArray(line)
+                ? line.map((position) => isPosition(position) ? transform(position) : position)
+                : line)
+            : coordinates;
     case 'MultiPolygon':
-        return coordinates.map((polygon: Position[][]) => polygon.map((line) => line.map((position) => transform(position))));
+        return Array.isArray(coordinates)
+            ? coordinates.map((polygon) => Array.isArray(polygon)
+                ? polygon.map((line) => Array.isArray(line)
+                    ? line.map((position) => isPosition(position) ? transform(position) : position)
+                    : line)
+                : polygon)
+            : coordinates;
     default:
         return coordinates;
     }
 }
 
-function computeGeometryBBox(geometry: any): BBox | null {
+function computeGeometryBBox(geometry: GeoJsonGeometry | null): BBox | null {
     let bbox: BBox | null = null;
     visitPositions(geometry, (position) => {
         if (!Number.isFinite(position[0]) || !Number.isFinite(position[1])) {
@@ -317,7 +346,7 @@ function mergeBBox(current: BBox | null, next: BBox): BBox {
     ];
 }
 
-function countGeometryVertices(geometry: any): number {
+function countGeometryVertices(geometry: GeoJsonGeometry | null): number {
     let count = 0;
     visitPositions(geometry, () => {
         count++;
@@ -325,7 +354,7 @@ function countGeometryVertices(geometry: any): number {
     return count;
 }
 
-function visitPositions(geometry: any, visitor: (position: Position) => void): void {
+function visitPositions(geometry: GeoJsonGeometry | null, visitor: (position: Position) => void): void {
     if (!geometry) {
         return;
     }
@@ -338,23 +367,79 @@ function visitPositions(geometry: any, visitor: (position: Position) => void): v
     visitCoordinatePositions(geometry.coordinates, geometry.type, visitor);
 }
 
-function visitCoordinatePositions(coordinates: any, geometryType: GeometryType, visitor: (position: Position) => void): void {
+function visitCoordinatePositions(coordinates: unknown, geometryType: GeometryType, visitor: (position: Position) => void): void {
     switch (geometryType) {
     case 'Point':
-        visitor(coordinates);
+        if (isPosition(coordinates)) {
+            visitor(coordinates);
+        }
         break;
     case 'MultiPoint':
     case 'LineString':
-        coordinates.forEach(visitor);
+        if (Array.isArray(coordinates)) {
+            coordinates.forEach((position) => {
+                if (isPosition(position)) {
+                    visitor(position);
+                }
+            });
+        }
         break;
     case 'MultiLineString':
     case 'Polygon':
-        coordinates.forEach((line: Position[]) => line.forEach(visitor));
+        if (Array.isArray(coordinates)) {
+            coordinates.forEach((line) => {
+                if (Array.isArray(line)) {
+                    line.forEach((position) => {
+                        if (isPosition(position)) {
+                            visitor(position);
+                        }
+                    });
+                }
+            });
+        }
         break;
     case 'MultiPolygon':
-        coordinates.forEach((polygon: Position[][]) => polygon.forEach((line) => line.forEach(visitor)));
+        if (Array.isArray(coordinates)) {
+            coordinates.forEach((polygon) => {
+                if (Array.isArray(polygon)) {
+                    polygon.forEach((line) => {
+                        if (Array.isArray(line)) {
+                            line.forEach((position) => {
+                                if (isPosition(position)) {
+                                    visitor(position);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
         break;
     default:
         break;
     }
+}
+
+function isGeoJsonGeometry(value: unknown): value is GeoJsonGeometry {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+    const type = (value as { type?: unknown }).type;
+    return typeof type === 'string' && isGeometryType(type);
+}
+
+function isGeometryType(value: string): value is GeometryType {
+    return [
+        'Point',
+        'MultiPoint',
+        'LineString',
+        'MultiLineString',
+        'Polygon',
+        'MultiPolygon',
+        'GeometryCollection'
+    ].includes(value);
+}
+
+function isPosition(value: unknown): value is Position {
+    return Array.isArray(value) && value.length >= 2 && value.every((coordinate) => typeof coordinate === 'number');
 }

@@ -312,7 +312,7 @@ body {
 }
 
 .parquet-table tbody tr.highlight {
-    background: var(--vscode-textPreformat-background) !important;
+    background: var(--vscode-textPreformat-background);
 }
 
 .raw-data-wrapper {

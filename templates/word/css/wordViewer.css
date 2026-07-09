@@ -275,9 +275,7 @@ body {
     width: 100%;
     max-width: 100%;
     clear: both;
-    break-inside: avoid;
     page-break-inside: avoid;
-    -webkit-column-break-inside: avoid;
 }
 
 .word-content.legacy-mode .ov-doc-legacy-block[data-ov-semantic-role="floating-media"] {
@@ -299,7 +297,6 @@ body {
 }
 
 .word-content.legacy-mode .ov-doc-legacy-block-overflow {
-    break-inside: auto;
     page-break-inside: auto;
 }
 
@@ -544,12 +541,10 @@ body {
 
     .word-content.legacy-mode .ov-doc-legacy-page {
         box-shadow: none;
-        break-after: page;
         page-break-after: always;
     }
 
     .word-content.legacy-mode .ov-doc-legacy-page:last-child {
-        break-after: auto;
         page-break-after: auto;
     }
 }
@@ -560,7 +555,7 @@ body {
 
 .word-content.docx-mode p[data-ov-bullet-fix="1"]::before,
 .word-content.docx-mode li[data-ov-bullet-fix="1"]::before {
-    content: "* " !important;
+    content: "* ";
 }
 
 .word-content.docx-mode .ov-chart-card {
@@ -657,7 +652,7 @@ body {
 
 @media print {
     body { background: white; }
-    .header, .controls { display: none !important; }
+    .header, .controls { display: none; }
     .document-container { padding: 0; overflow: visible; }
     .word-content {
         box-shadow: none;
@@ -665,6 +660,6 @@ body {
         min-width: auto;
         max-width: 100%;
         min-height: auto;
-        transform: none !important;
+        transform: none;
     }
 }

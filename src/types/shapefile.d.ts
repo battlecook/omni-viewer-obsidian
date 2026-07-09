@@ -10,7 +10,7 @@ declare module 'shapefile' {
         highWaterMark?: number;
     }
 
-    export function open<T = any>(
+    export function open<T = unknown>(
         shp: string | ArrayBuffer | Uint8Array,
         dbf?: string | null | ArrayBuffer | Uint8Array | ShapefileOptions,
         options?: ShapefileOptions

@@ -310,7 +310,7 @@ body {
 }
 
 .is-hidden {
-    display: none !important;
+    display: none;
 }
 
 @media (max-width: 900px) {

@@ -33,7 +33,7 @@ Obsidian core already handles some extensions (md, pdf, images, audio, video, â€
 Commands (Cmd/Ctrl-P):
 
 - `Omni Viewer: Refresh viewer`
-- `Omni Viewer: Share current file with Omni Viewer`
+- `Omni Viewer: Share current file`
 - `Omni Viewer: Open shared link`
 
 ## Installation (manual / development)

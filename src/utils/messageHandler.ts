@@ -18,7 +18,6 @@ export class MessageHandler {
 
         switch (messageType) {
             case 'log':
-                console.log('Webview:', message.text);
                 break;
             case 'error':
                 new Notice(`Webview Error: ${message.text}`);
@@ -72,8 +71,6 @@ export class MessageHandler {
             case 'omniViewerOpenSharedLink':
                 await openSharedLinkCommand(context.app);
                 break;
-            default:
-                console.log('Unknown message type:', messageType);
         }
     }
 

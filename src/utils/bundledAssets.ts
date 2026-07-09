@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as zlib from 'zlib';
 import { BUNDLED_BINARY_ASSETS_BASE64, BUNDLED_TEXT_ASSETS } from '../generated/assets';
 
 const MIME_TYPES: Record<string, string> = {
@@ -31,30 +32,36 @@ export function bundledAssetKeyFromPath(assetPath: string, baseDir?: string): st
 export function getBundledTextAsset(keyOrPath: string, baseDir?: string): string | undefined {
     const directKey = normalizeAssetKey(keyOrPath);
     if (Object.prototype.hasOwnProperty.call(BUNDLED_TEXT_ASSETS, directKey)) {
-        return BUNDLED_TEXT_ASSETS[directKey];
+        return inflateBundledTextAsset(BUNDLED_TEXT_ASSETS[directKey]);
     }
 
     const derivedKey = bundledAssetKeyFromPath(keyOrPath, baseDir);
-    return BUNDLED_TEXT_ASSETS[derivedKey];
+    const asset = BUNDLED_TEXT_ASSETS[derivedKey];
+    return asset === undefined ? undefined : inflateBundledTextAsset(asset);
+}
+
+function inflateBundledTextAsset(gzipBase64: string): string {
+    return zlib.gunzipSync(Buffer.from(gzipBase64, 'base64')).toString('utf8');
 }
 
 export function getBundledBinaryAssetBase64(keyOrPath: string, baseDir?: string): string | undefined {
-    const directKey = normalizeAssetKey(keyOrPath);
-    if (Object.prototype.hasOwnProperty.call(BUNDLED_BINARY_ASSETS_BASE64, directKey)) {
-        return BUNDLED_BINARY_ASSETS_BASE64[directKey];
-    }
-
-    const derivedKey = bundledAssetKeyFromPath(keyOrPath, baseDir);
-    return BUNDLED_BINARY_ASSETS_BASE64[derivedKey];
+    const binaryAsset = getBundledBinaryAsset(keyOrPath, baseDir);
+    return binaryAsset === undefined ? undefined : Buffer.from(binaryAsset).toString('base64');
 }
 
 export function getBundledBinaryAsset(keyOrPath: string, baseDir?: string): Uint8Array | undefined {
-    const base64 = getBundledBinaryAssetBase64(keyOrPath, baseDir);
-    if (!base64) {
-        return undefined;
+    const directKey = normalizeAssetKey(keyOrPath);
+    if (Object.prototype.hasOwnProperty.call(BUNDLED_BINARY_ASSETS_BASE64, directKey)) {
+        return inflateBundledBinaryAsset(BUNDLED_BINARY_ASSETS_BASE64[directKey]);
     }
 
-    return Uint8Array.from(Buffer.from(base64, 'base64'));
+    const derivedKey = bundledAssetKeyFromPath(keyOrPath, baseDir);
+    const asset = BUNDLED_BINARY_ASSETS_BASE64[derivedKey];
+    return asset === undefined ? undefined : inflateBundledBinaryAsset(asset);
+}
+
+function inflateBundledBinaryAsset(gzipBase64: string): Uint8Array {
+    return Uint8Array.from(zlib.gunzipSync(Buffer.from(gzipBase64, 'base64')));
 }
 
 export function getBundledAssetDataUri(keyOrPath: string, baseDir?: string): string | undefined {

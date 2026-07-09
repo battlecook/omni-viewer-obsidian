@@ -5,17 +5,55 @@ export interface FileDialogFilter {
     extensions: string[];
 }
 
-function getElectronRemote(): any | null {
+interface ElectronSaveDialogResult {
+    canceled?: boolean;
+    filePath?: string;
+}
+
+interface ElectronOpenDialogResult {
+    canceled?: boolean;
+    filePaths?: string[];
+}
+
+interface ElectronDialog {
+    showSaveDialog(options: { defaultPath: string; filters: FileDialogFilter[] }): Promise<ElectronSaveDialogResult>;
+    showOpenDialog(options: { properties: string[]; filters: FileDialogFilter[] }): Promise<ElectronOpenDialogResult>;
+}
+
+interface ElectronShell {
+    showItemInFolder(path: string): void;
+}
+
+interface ElectronRemote {
+    dialog?: ElectronDialog;
+    shell?: ElectronShell;
+}
+
+interface ElectronModule {
+    remote?: ElectronRemote;
+    shell?: ElectronShell;
+}
+
+type ElectronRequire = (moduleName: 'electron') => ElectronModule;
+
+interface WindowWithElectronRequire extends Window {
+    require?: ElectronRequire;
+}
+
+function getElectronModule(): ElectronModule | null {
     try {
-        const req = (window as any).require;
+        const req = (window as WindowWithElectronRequire).require;
         if (!req) {
             return null;
         }
-        const electron = req('electron');
-        return electron?.remote ?? null;
+        return req('electron');
     } catch {
         return null;
     }
+}
+
+function getElectronRemote(): ElectronRemote | null {
+    return getElectronModule()?.remote ?? null;
 }
 
 export async function showSaveDialog(defaultPath: string, filters: FileDialogFilter[]): Promise<string | null> {
@@ -53,8 +91,7 @@ export async function showOpenDialog(filters: FileDialogFilter[]): Promise<strin
 export function revealInOS(absolutePath: string): void {
     const remote = getElectronRemote();
     try {
-        const req = (window as any).require;
-        const shell = req ? req('electron')?.shell : null;
+        const shell = getElectronModule()?.shell ?? null;
         if (shell?.showItemInFolder) {
             shell.showItemInFolder(absolutePath);
             return;
@@ -135,13 +172,13 @@ class TextInputModal extends Modal {
     onOpen(): void {
         this.titleEl.setText(this.title);
         const errorEl = this.contentEl.createEl('p', { cls: 'mod-warning', text: '' });
-        errorEl.style.minHeight = '1em';
+        errorEl.setCssStyles({ minHeight: '1em' });
 
         this.value = this.initialValue;
         const input = this.contentEl.createEl('input', { type: 'text' });
         input.placeholder = this.placeholder;
         input.value = this.initialValue;
-        input.style.width = '100%';
+        input.setCssStyles({ width: '100%' });
         input.addEventListener('input', () => {
             this.value = input.value;
             errorEl.setText('');

@@ -149,7 +149,7 @@
     }
 
     function importRhwpModule(moduleUri) {
-        return new Function('modulePath', 'return import(/* webpackIgnore: true */ modulePath);')(moduleUri);
+        return import(moduleUri);
     }
 
     async function renderDocument() {

@@ -1031,7 +1031,7 @@ export class FileUtils {
     }
 
     public static async readJsonlFile(filePath: string): Promise<{
-        lines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }>;
+        lines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }>;
         totalLines: number;
         validLines: number;
         invalidLines: number;
@@ -1041,7 +1041,7 @@ export class FileUtils {
     }
 
     public static async readJsonlFilePreview(filePath: string, previewBytes = 10 * 1024 * 1024): Promise<{
-        lines: Array<{ lineNumber: number; content: string; parsedJson?: any; isValid: boolean }>;
+        lines: Array<{ lineNumber: number; content: string; parsedJson?: unknown; isValid: boolean }>;
         totalLines: number;
         validLines: number;
         invalidLines: number;
@@ -1057,7 +1057,7 @@ export class FileUtils {
 
     public static async readJsonFile(filePath: string): Promise<{
         formattedJson: string;
-        parsedJson: any;
+        parsedJson: unknown;
         fileSize: string;
     }> {
         return readStructuredJsonFile(filePath);
@@ -1076,7 +1076,7 @@ export class FileUtils {
         sheets: Array<{
             name: string;
             headers: string[];
-            rows: any[][];
+            rows: unknown[][];
             totalRows: number;
             totalColumns: number;
         }>;
@@ -1203,13 +1203,10 @@ export class FileUtils {
             const fileSize = await this.getFileSize(filePath);
 
             if (ext === '.pptx') {
-                const parseStartedAt = Date.now();
                 const parsed = await PptxXmlParser.parse(filePath);
-                const parseElapsedMs = Date.now() - parseStartedAt;
                 const hasRenderableElement = parsed.slides.some((slide) =>
                     Array.isArray(slide.elements) && slide.elements.length > 0
                 );
-                console.log(`[PPT] Parsed PPTX XML in ${parseElapsedMs}ms (${parsed.totalSlides} slides)`);
 
                 if (!hasRenderableElement) {
                     // Fallback to the legacy PPTX extractor so users still see content
@@ -1251,10 +1248,7 @@ export class FileUtils {
 
             // Legacy .ppt: standalone parser first (no LibreOffice dependency).
             try {
-                const parseStartedAt = Date.now();
                 const parsedLegacy = await PptBinaryParser.parse(filePath);
-                const parseElapsedMs = Date.now() - parseStartedAt;
-                console.log(`[PPT] Parsed legacy PPT in ${parseElapsedMs}ms (${parsedLegacy.totalSlides} slides)`);
                 if (parsedLegacy.totalSlides > 0) {
                     return {
                         mode: 'xml',
@@ -1864,17 +1858,12 @@ export class FileUtils {
         fileSize: string;
     }> {
         try {
-            console.log('[HWP] Reading file:', filePath);
             const buffer = await fs.promises.readFile(filePath);
-            console.log('[HWP] File buffer size:', buffer.length);
-            
             const fileSize = await this.getFileSize(filePath);
-            console.log('[HWP] File size:', fileSize);
 
             // hwp.js's browser Viewer preserves page layout much better than a
             // handcrafted HTML conversion, so pass the raw document bytes through.
             const base64 = buffer.toString('base64');
-            console.log('[HWP] Encoded base64 length:', base64.length);
 
             return {
                 base64,

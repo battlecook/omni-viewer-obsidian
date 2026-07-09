@@ -21,17 +21,14 @@ export default class OmniViewerPlugin extends Plugin {
         this.templatesDir = path.join(pluginDir, 'templates');
         this.wasmDir = path.join(pluginDir, 'wasm');
 
-        const failedExtensions: string[] = [];
         for (const definition of VIEWER_DEFINITIONS) {
             this.registeredViewTypes.add(definition.viewType);
             this.registerView(
                 definition.viewType,
                 createViewFactory(definition, this.templatesDir, this.wasmDir, this.registeredViewTypes)
             );
-            failedExtensions.push(...this.registerViewerExtensions(definition));
+            this.registerViewerExtensions(definition);
         }
-        console.log(`[Omni Viewer] loaded: ${VIEWER_DEFINITIONS.length} viewers registered. templatesDir=${this.templatesDir}`
-            + (failedExtensions.length ? ` | extensions kept by core/other plugins: ${failedExtensions.join(', ')}` : ''));
 
         this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
             if (!(file instanceof TFile)) {
@@ -57,7 +54,7 @@ export default class OmniViewerPlugin extends Plugin {
 
         this.addCommand({
             id: 'share-file',
-            name: 'Share current file with Omni Viewer',
+            name: 'Share current file',
             checkCallback: (checking) => {
                 const file = this.app.workspace.getActiveFile();
                 if (!file) {

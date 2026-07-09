@@ -388,24 +388,24 @@ body.vscode-high-contrast-light {
 .mermaid-diagram svg text,
 .mermaid-diagram svg text *,
 .mermaid-diagram svg tspan {
-    color: #111 !important;
-    fill: #111 !important;
+    color: #111;
+    fill: #111;
 }
 
 .mermaid-diagram svg .stateLabel,
 .mermaid-diagram svg .stateLabel *,
 .mermaid-diagram svg foreignObject,
 .mermaid-diagram svg foreignObject * {
-    color: #111 !important;
+    color: #111;
 }
 
 .mermaid-diagram svg .edgeLabel {
-    color: #111 !important;
+    color: #111;
 }
 
 .mermaid-diagram svg .edgeLabel rect,
 .mermaid-diagram svg .labelBkg {
-    fill: #fff !important;
+    fill: #fff;
 }
 
 .mermaid-diagram.is-invalid {

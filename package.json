@@ -1,7 +1,7 @@
 {
   "name": "omni-viewer-obsidian",
   "version": "0.1.0",
-  "description": "Obsidian plugin for viewing audio, image, video, archive, csv, automotive, office, PDF and many more file formats.",
+  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, data, diagram, and automotive files.",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -37,7 +37,6 @@
   ],
   "devDependencies": {
     "@types/node": "^16.18.0",
-    "builtin-modules": "^3.3.0",
     "esbuild": "^0.21.5",
     "obsidian": "^1.5.7",
     "tslib": "^2.6.2",

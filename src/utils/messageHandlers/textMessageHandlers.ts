@@ -10,14 +10,20 @@ export class TextMessageHandlers {
                 throw new Error('No data provided for saving');
             }
 
-            if (message.data.headers && message.data.rows) {
-                const delimiter = message.data.delimiter || FileUtils.getDelimitedFileDelimiter(context.absPath);
-                const csvContent = this.convertToDelimitedString(message.data.headers, message.data.rows, delimiter);
+            if (Array.isArray(message.data.headers) && Array.isArray(message.data.rows)) {
+                const headers = message.data.headers.map((value) => String(value));
+                const rows = message.data.rows.map((row) => (
+                    Array.isArray(row) ? row.map((value) => String(value)) : []
+                ));
+                const delimiter = typeof message.data.delimiter === 'string'
+                    ? message.data.delimiter
+                    : FileUtils.getDelimitedFileDelimiter(context.absPath);
+                const csvContent = this.convertToDelimitedString(headers, rows, delimiter);
                 await context.app.vault.modify(context.file, csvContent);
                 return;
             }
 
-            if (message.data.content) {
+            if (typeof message.data.content === 'string') {
                 await context.app.vault.modify(context.file, message.data.content);
                 return;
             }
@@ -85,7 +91,7 @@ export class TextMessageHandlers {
 
     public static async handleInsertMultipleLines(message: WebviewMessage, context: MessageContext): Promise<void> {
         await this.updateLines(context, (lines) => {
-            if (!message.data || message.data.afterLineNumber === undefined || !Array.isArray(message.data.lines)) {
+            if (!message.data || typeof message.data.afterLineNumber !== 'number' || !Array.isArray(message.data.lines)) {
                 throw new Error('After line number and lines array are required');
             }
 
@@ -94,7 +100,7 @@ export class TextMessageHandlers {
                 throw new Error(`Line ${message.data.afterLineNumber} is out of range`);
             }
 
-            lines.splice(insertIndex, 0, ...message.data.lines);
+            lines.splice(insertIndex, 0, ...message.data.lines.map((line) => String(line)));
             return lines;
         }, 'insert lines');
     }
@@ -105,7 +111,10 @@ export class TextMessageHandlers {
                 throw new Error('Line numbers array is required');
             }
 
-            const sortedLineNumbers = [...message.data.lineNumbers].sort((a: number, b: number) => b - a);
+            const sortedLineNumbers = message.data.lineNumbers
+                .map((lineNumber) => Number(lineNumber))
+                .filter((lineNumber) => Number.isInteger(lineNumber))
+                .sort((a, b) => b - a);
             sortedLineNumbers.forEach((lineNumber: number) => {
                 const lineIndex = lineNumber - 1;
                 if (lineIndex >= 0 && lineIndex < lines.length) {

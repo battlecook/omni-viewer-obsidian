@@ -348,7 +348,6 @@ body {
 
 .selection-info {
     font-size: 11px;
-    color: var(--vscode-descriptionForeground);
     margin-left: 10px;
     padding: 2px 6px;
     background: var(--vscode-badge-background);

@@ -1,5 +1,6 @@
 import { FileUtils } from '../utils/fileUtils';
 import { MessageHandler } from '../utils/messageHandler';
+import { WebviewMessage } from '../utils/messageHandlers/types';
 import { TemplateUtils } from '../utils/templateUtils';
 import { ViewerDefinition } from '../viewerCore';
 
@@ -21,7 +22,7 @@ export const archiveViewer: ViewerDefinition = {
         });
 
         ctx.host.setHtml(html);
-        ctx.host.onMessage(async (message: any) => {
+        ctx.host.onMessage(async (message: WebviewMessage) => {
             if (!message) {
                 return;
             }

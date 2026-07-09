@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FileUtils } from '../utils/fileUtils';
 import { MessageHandler } from '../utils/messageHandler';
+import { WebviewMessage } from '../utils/messageHandlers/types';
 import { TemplateUtils } from '../utils/templateUtils';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 
@@ -11,7 +12,7 @@ import { RenderContext, ViewerDefinition } from '../viewerCore';
  * `saveSourceResult` reply; everything else goes to the shared MessageHandler.
  */
 function setupSaveSourceMessages(ctx: RenderContext): void {
-    ctx.host.onMessage(async (message: any) => {
+    ctx.host.onMessage(async (message: WebviewMessage) => {
         if (!message) {
             return;
         }

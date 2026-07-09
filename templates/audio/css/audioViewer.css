@@ -86,12 +86,12 @@ body {
 }
 
 .btn.playing {
-    background: #dc3545 !important;
-    color: white !important;
+    background: #dc3545;
+    color: white;
 }
 
 .btn.playing:hover {
-    background: #c82333 !important;
+    background: #c82333;
 }
 
 .zoom-btn {
@@ -167,7 +167,7 @@ body {
 }
 
 #spectrogram canvas {
-    width: 100% !important;
+    width: 100%;
     border-radius: 4px;
     display: block;
 }

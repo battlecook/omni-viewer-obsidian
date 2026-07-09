@@ -235,9 +235,9 @@ body {
 }
 
 .header-edit-input {
-    background: var(--vscode-input-background) !important;
-    color: var(--vscode-input-foreground) !important;
-    border: 1px solid var(--vscode-focusBorder) !important;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-focusBorder);
     border-radius: 2px;
 }
 
@@ -282,8 +282,8 @@ body {
 
 body.is-resizing-columns,
 body.is-resizing-columns * {
-    cursor: col-resize !important;
-    user-select: none !important;
+    cursor: col-resize;
+    user-select: none;
 }
 
 .csv-table tbody tr:nth-child(even) {
@@ -295,7 +295,7 @@ body.is-resizing-columns * {
 }
 
 .csv-table tbody tr.highlight {
-    background: var(--vscode-textPreformat-background) !important;
+    background: var(--vscode-textPreformat-background);
 }
 
 .raw-data-wrapper {
@@ -439,13 +439,13 @@ body.is-resizing-columns * {
 }
 
 .editable-cell:hover {
-    background-color: var(--vscode-list-hoverBackground) !important;
+    background-color: var(--vscode-list-hoverBackground);
 }
 
 .cell-edit-input {
-    background-color: var(--vscode-input-background) !important;
-    color: var(--vscode-input-foreground) !important;
-    border: 2px solid var(--vscode-focusBorder) !important;
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 2px solid var(--vscode-focusBorder);
     border-radius: 2px;
     box-sizing: border-box;
 }

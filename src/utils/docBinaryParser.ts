@@ -4550,7 +4550,7 @@ export class DocBinaryParser {
             return (parsed.SheetNames
                 .map((sheetName) => {
                     const sheet = parsed.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false }) as any[][];
+                    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, blankrows: false });
                     const normalizedRows = rows
                         .map((row) => row.map((cell) => this.normalizeParagraphText(String(cell ?? ''))))
                         .filter((row) => row.some((cell) => cell.length > 0));

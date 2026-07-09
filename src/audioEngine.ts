@@ -1,6 +1,37 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { getBundledBinaryAsset, getBundledTextAsset } from './utils/bundledAssets';
+import AudioEngineModule from '../wasm/audio_engine.js';
+import { getBundledBinaryAsset } from './utils/bundledAssets';
+
+interface AudioEngineWasmModule {
+    HEAPU8: Uint8Array;
+    HEAPF32: Float32Array;
+    _malloc(size: number): number;
+    _free(ptr: number): void;
+    _free_audio(ptr: number): void;
+    _free_buffer(ptr: number): void;
+    _decode_audio(inputPtr: number, inputLength: number): number;
+    _audio_get_channels(audioPtr: number): number;
+    _audio_get_sample_rate(audioPtr: number): number;
+    _audio_get_total_frames(audioPtr: number): number;
+    _audio_get_total_frames_high(audioPtr: number): number;
+    _generate_peaks(audioPtr: number, peaksWidth: number): number;
+    _generate_spectrogram(
+        audioPtr: number,
+        fftSize: number,
+        hopSize: number,
+        outWidthPtr: number,
+        outHeightPtr: number
+    ): number;
+    getValue(ptr: number, type: 'i32'): number;
+}
+
+interface AudioEngineOptions {
+    wasmBinary?: Uint8Array;
+    locateFile: (file: string) => string;
+}
+
+type AudioEngineFactory = (options: AudioEngineOptions) => Promise<AudioEngineWasmModule>;
 
 export interface AudioAnalysis {
     peaks: number[][];       // wavesurfer peaks format: [[...]]
@@ -16,7 +47,7 @@ const FFT_SIZE = 2048;
 const DEFAULT_PEAKS_WIDTH = 32000; // high-density peaks for zoomed view
 
 export class AudioEngine {
-    private module: any = null;
+    private module: AudioEngineWasmModule | null = null;
 
     constructor(private readonly wasmDir: string) {}
 
@@ -26,57 +57,50 @@ export class AudioEngine {
         const wasmDir = this.wasmDir;
         const jsPath = path.join(wasmDir, 'audio_engine.js');
 
-        const AudioEngineModule = fs.existsSync(jsPath)
+        const audioEngineModule: AudioEngineFactory = fs.existsSync(jsPath)
             ? this.loadAudioEngineFromFile(jsPath)
-            : this.loadBundledAudioEngine(jsPath);
+            : (AudioEngineModule as unknown as AudioEngineFactory);
         const wasmBinary = getBundledBinaryAsset('wasm/audio_engine.wasm') ?? getBundledBinaryAsset(path.join(wasmDir, 'audio_engine.wasm'), wasmDir);
-        this.module = await AudioEngineModule({
+        this.module = await audioEngineModule({
             ...(wasmBinary ? { wasmBinary } : {}),
             locateFile: (file: string) => path.join(wasmDir, file)
         });
     }
 
-    private loadAudioEngineFromFile(jsPath: string): any {
+    private loadAudioEngineFromFile(jsPath: string): AudioEngineFactory {
         // Load the emscripten glue at runtime so the bundler does not inline it.
-        const requireFn: NodeRequire = (globalThis as unknown as { require: NodeRequire }).require;
-        return requireFn(jsPath);
-    }
-
-    private loadBundledAudioEngine(jsPath: string): any {
-        const jsContent = getBundledTextAsset('wasm/audio_engine.js') ?? getBundledTextAsset(jsPath, this.wasmDir);
-        if (!jsContent) {
-            throw new Error(`WASM module not found: ${jsPath}`);
+        const requireFn: NodeRequire = require;
+        const loadedModule = requireFn(jsPath) as { default?: AudioEngineFactory } | AudioEngineFactory;
+        const factory = typeof loadedModule === 'function' ? loadedModule : loadedModule.default;
+        if (!factory) {
+            throw new Error(`Invalid audio engine module: ${jsPath}`);
         }
-
-        const moduleObject = { exports: {} as any };
-        const dirname = path.dirname(jsPath);
-        const requireFn: NodeRequire = (globalThis as unknown as { require: NodeRequire }).require;
-        const factory = new Function('module', 'exports', 'require', '__filename', '__dirname', jsContent);
-        factory(moduleObject, moduleObject.exports, requireFn, jsPath, dirname);
-        return moduleObject.exports.default ?? moduleObject.exports;
+        return factory;
     }
 
     async analyze(filePath: string, peaksWidth: number = DEFAULT_PEAKS_WIDTH): Promise<AudioAnalysis> {
         if (!this.module) {
             await this.init();
         }
+        const module = this.module;
+        if (!module) {
+            throw new Error('Audio engine failed to initialize.');
+        }
 
         const fileBuffer = await fs.promises.readFile(filePath);
         const uint8 = new Uint8Array(fileBuffer);
         const ext = path.extname(filePath).toLowerCase();
 
-        console.log(`[AudioEngine] Analyzing: ${path.basename(filePath)} (${(uint8.length / 1024 / 1024).toFixed(1)}MB, ext=${ext})`);
-
         // Copy input data to WASM memory
-        const inputPtr = this.module._malloc(uint8.length);
+        const inputPtr = module._malloc(uint8.length);
         if (!inputPtr) {
             throw new Error(`WASM malloc failed for input buffer (${(uint8.length / 1024 / 1024).toFixed(1)}MB)`);
         }
-        this.module.HEAPU8.set(uint8, inputPtr);
+        module.HEAPU8.set(uint8, inputPtr);
 
         // Decode audio
-        const audioPtr = this.module._decode_audio(inputPtr, uint8.length);
-        this.module._free(inputPtr);
+        const audioPtr = module._decode_audio(inputPtr, uint8.length);
+        module._free(inputPtr);
 
         if (!audioPtr) {
             const supported = ['.wav', '.mp3', '.flac', '.ogg'];
@@ -88,38 +112,38 @@ export class AudioEngine {
 
         try {
             // Read audio properties via accessor functions
-            const channels = this.module._audio_get_channels(audioPtr);
-            const sampleRate = this.module._audio_get_sample_rate(audioPtr);
-            const totalFramesLow = this.module._audio_get_total_frames(audioPtr);
-            const totalFramesHigh = this.module._audio_get_total_frames_high(audioPtr);
+            const channels = module._audio_get_channels(audioPtr);
+            const sampleRate = module._audio_get_sample_rate(audioPtr);
+            const totalFramesLow = module._audio_get_total_frames(audioPtr);
+            const totalFramesHigh = module._audio_get_total_frames_high(audioPtr);
             const totalFrames = totalFramesLow + totalFramesHigh * 0x100000000;
             const duration = totalFrames / sampleRate;
 
             // Generate peaks
-            const peaksPtr = this.module._generate_peaks(audioPtr, peaksWidth);
+            const peaksPtr = module._generate_peaks(audioPtr, peaksWidth);
             if (!peaksPtr) {
                 throw new Error('Failed to generate peaks');
             }
 
             const peaksArray = new Float32Array(
-                this.module.HEAPF32.buffer, peaksPtr, peaksWidth
+                module.HEAPF32.buffer, peaksPtr, peaksWidth
             ).slice(); // copy out of WASM memory
-            this.module._free_buffer(peaksPtr);
+            module._free_buffer(peaksPtr);
 
             // Calculate hop_size to limit spectrogram time columns
             const hopSize = Math.max(512, Math.ceil(totalFrames / MAX_SPEC_WIDTH));
 
             // Generate spectrogram
-            const outWidthPtr = this.module._malloc(4);
-            const outHeightPtr = this.module._malloc(4);
-            const specPtr = this.module._generate_spectrogram(
+            const outWidthPtr = module._malloc(4);
+            const outHeightPtr = module._malloc(4);
+            const specPtr = module._generate_spectrogram(
                 audioPtr, FFT_SIZE, hopSize, outWidthPtr, outHeightPtr
             );
 
-            const specWidth = this.module.getValue(outWidthPtr, 'i32');
-            const specHeight = this.module.getValue(outHeightPtr, 'i32'); // FFT_SIZE / 2 = 1024
-            this.module._free(outWidthPtr);
-            this.module._free(outHeightPtr);
+            const specWidth = module.getValue(outWidthPtr, 'i32');
+            const specHeight = module.getValue(outHeightPtr, 'i32'); // FFT_SIZE / 2 = 1024
+            module._free(outWidthPtr);
+            module._free(outHeightPtr);
 
             let spectrogram: number[][] = [];
             if (specPtr && specWidth > 0 && specHeight > 0) {
@@ -131,7 +155,7 @@ export class AudioEngine {
                     if (freqStep === 1) {
                         // No downsampling — copy directly
                         for (let f = 0; f < outHeight; f++) {
-                            column[f] = this.module.HEAPU8[specPtr + t * specHeight + f];
+                            column[f] = module.HEAPU8[specPtr + t * specHeight + f];
                         }
                     } else {
                         for (let fOut = 0; fOut < outHeight; fOut++) {
@@ -139,14 +163,14 @@ export class AudioEngine {
                             const fEnd = Math.min(fStart + freqStep, specHeight);
                             let sum = 0;
                             for (let f = fStart; f < fEnd; f++) {
-                                sum += this.module.HEAPU8[specPtr + t * specHeight + f];
+                                sum += module.HEAPU8[specPtr + t * specHeight + f];
                             }
                             column[fOut] = Math.round(sum / (fEnd - fStart));
                         }
                     }
                     spectrogram.push(column);
                 }
-                this.module._free_buffer(specPtr);
+                module._free_buffer(specPtr);
             }
 
             return {
@@ -157,7 +181,7 @@ export class AudioEngine {
                 spectrogram
             };
         } finally {
-            this.module._free_audio(audioPtr);
+            module._free_audio(audioPtr);
         }
     }
 }
