@@ -23,7 +23,7 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 - **PDF editor**: text, stamps, signatures, page reorder, merge with another PDF, save / save-as.
 - **CSV editor**: cell editing writes back to the file.
 - **Content-signature rerouting**: files whose content doesn't match their extension are opened with the right viewer automatically.
-- **Share**: upload a file (max 10 MB, 5-minute expiry) and copy the share link; open a shared link to download it into the `omni-viewer-shared` vault folder.
+- **Share**: upload a copy of the selected file to Omni Viewer's external share service (max 10 MB, 5-minute expiry) and copy the share link; open a shared link to download it into the `omni-viewer-shared` vault folder. See the [Privacy Policy](https://omni-viewer-web.web.app/privacy/) for details.
 - Refresh command to re-render the active viewer.
 
 ## How viewers are activated
