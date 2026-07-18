@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.2] - 2026-07-18
+
+### Changed
+- Migrated the CSV and PDF viewers to the shared `omni-viewer-core` rendering engine, mounting the core viewer directly into the view instead of the iframe/template path.
+- CSV: editing now preserves scroll position, sort order, and selection when you save; export uses the system save dialog, matching the PDF viewer and the rest of the plugin.
+- PDF: adding annotations and saving no longer resets the current page, zoom, or scroll.
+- Moved Share and Open shared link from in-view buttons to the viewer toolbar actions.
+- Updated `xlsx` to the official SheetJS distribution (npm publishing stopped at 0.18.5).
+
 ## [0.1.1] - 2026-07-10
 
 ### Changed
