@@ -10,3 +10,23 @@
     display: block;
     background-color: transparent;
 }
+
+/* omni-viewer-core theme mapping (DESIGN.md §6): --omni-* tokens are the only
+   variables core viewers read; custom properties pierce the shadow boundary. */
+.omni-viewer-content {
+    --omni-bg: var(--background-primary);
+    --omni-bg-secondary: var(--background-secondary);
+    --omni-fg: var(--text-normal);
+    --omni-fg-muted: var(--text-muted);
+    --omni-border: var(--background-modifier-border);
+    --omni-accent: var(--interactive-accent);
+    --omni-accent-fg: var(--text-on-accent);
+    --omni-input-bg: var(--background-modifier-form-field);
+    --omni-button-bg: var(--interactive-normal);
+    --omni-button-hover-bg: var(--interactive-hover);
+    --omni-warning-fg: var(--text-warning);
+    --omni-error-fg: var(--text-error);
+    --omni-font: var(--font-interface);
+    --omni-font-mono: var(--font-monospace);
+    --omni-font-size: var(--font-ui-small);
+}

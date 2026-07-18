@@ -80,7 +80,7 @@ export default class OmniViewerPlugin extends Plugin {
      * Claim file extensions for the viewer. Obsidian throws when another view
      * (including core viewers for md/pdf/images/media) already owns an
      * extension, so register one-by-one; files whose extension stays with the
-     * core viewer remain reachable through the "Open with …" file menu.
+     * core viewer remain reachable through the "Open With OmniViewer" file menu.
      */
     private registerViewerExtensions(definition: ViewerDefinition): string[] {
         const failed: string[] = [];
@@ -100,7 +100,7 @@ export default class OmniViewerPlugin extends Plugin {
 
         for (const definition of matching) {
             menu.addItem((item) => item
-                .setTitle(`Open with ${definition.displayName}`)
+                .setTitle('Open With OmniViewer')
                 .setIcon(definition.icon)
                 .setSection('open')
                 .onClick(async () => {

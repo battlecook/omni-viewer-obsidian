@@ -1,4 +1,4 @@
-import { FileSystemAdapter, FileView, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
+import { FileSystemAdapter, FileView, Notice, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { MessageHandler } from './utils/messageHandler';
@@ -8,6 +8,7 @@ import { FileUtils, OmniViewerViewType } from './utils/fileUtils';
 import { RenderContext, ViewerDefinition, ViewerHost, renderErrorHtml } from './viewerCore';
 import { buildVscodeThemeCss } from './themeBridge';
 import { getBundledAssetDataUri } from './utils/bundledAssets';
+import { openSharedLinkCommand, shareFileCommand } from './shareCommand';
 
 const BRIDGE_SCRIPT = `<script>
 (function () {
@@ -60,6 +61,10 @@ export class OmniViewerView extends FileView implements ViewerHost {
     private messageListeners: MessageListener[] = [];
     private defaultListener: MessageListener | null = null;
     private renderToken = 0;
+    /** Active omni-viewer-core viewer handle (direct DOM mount path). */
+    private coreViewerHandle: { dispose(): void; isDirty?(): boolean } | null = null;
+    /** Deadline (ms epoch) until which a self-write reload echo is suppressed. */
+    private suppressReloadUntil = 0;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -93,6 +98,24 @@ export class OmniViewerView extends FileView implements ViewerHost {
 
     onload(): void {
         super.onload();
+        this.addAction(
+            'cloud-upload',
+            'Share with Omni Viewer (expires in 5 minutes)',
+            () => {
+                if (!this.file) {
+                    new Notice('Omni Viewer: no file selected to share.');
+                    return;
+                }
+                if (this.coreViewerHandle?.isDirty?.()) {
+                    new Notice('Omni Viewer: save your changes before sharing.');
+                    return;
+                }
+                void shareFileCommand(this.app, this.file);
+            }
+        );
+        this.addAction('link', 'Open shared link', () => {
+            void openSharedLinkCommand(this.app);
+        });
         this.contentEl.addClass('omni-viewer-content');
         this.registerDomEvent(window, 'message', (event: MessageEvent) => {
             if (!this.iframe || event.source !== this.iframe.contentWindow) {
@@ -118,7 +141,19 @@ export class OmniViewerView extends FileView implements ViewerHost {
         this.messageListeners = [];
         this.defaultListener = null;
         this.iframe = null;
+        this.disposeCoreViewer();
         this.contentEl.empty();
+    }
+
+    private disposeCoreViewer(): void {
+        if (this.coreViewerHandle) {
+            try {
+                this.coreViewerHandle.dispose();
+            } catch (error) {
+                console.error('Omni Viewer core dispose error:', error);
+            }
+            this.coreViewerHandle = null;
+        }
     }
 
     public async refresh(): Promise<void> {
@@ -128,9 +163,25 @@ export class OmniViewerView extends FileView implements ViewerHost {
     }
 
     private async renderFile(file: TFile): Promise<void> {
+        // A re-render (e.g. triggered by our own save touching the vault)
+        // would rebuild the viewer and discard unsaved edits — hold off while
+        // the core viewer reports dirty state.
+        if (this.coreViewerHandle?.isDirty?.()) {
+            return;
+        }
+        // Skip the single reload echo that Obsidian fires after our own
+        // writeback: remounting the core viewer would reset its scroll/zoom/
+        // selection even though the content is unchanged. The window is
+        // consumed on first use so a later genuine reload still applies.
+        if (this.suppressReloadUntil && Date.now() < this.suppressReloadUntil) {
+            this.suppressReloadUntil = 0;
+            return;
+        }
+        this.suppressReloadUntil = 0;
         const token = ++this.renderToken;
         this.messageListeners = [];
         this.defaultListener = null;
+        this.disposeCoreViewer();
 
         const absPath = this.getAbsolutePath(file);
 
@@ -174,6 +225,26 @@ export class OmniViewerView extends FileView implements ViewerHost {
     }
 
     // ---------------------------------------------------------------- ViewerHost
+
+    public provideDomContainer(): HTMLElement {
+        this.disposeCoreViewer();
+        this.iframe = null;
+        this.contentEl.empty();
+        const container = this.contentEl.createDiv();
+        container.setCssStyles({ width: '100%', height: '100%' });
+        return container;
+    }
+
+    public setCoreViewerHandle(handle: { dispose(): void }): void {
+        this.disposeCoreViewer();
+        this.coreViewerHandle = handle;
+    }
+
+    public markInternalWrite(): void {
+        // Cover the async gap between modifyBinary resolving and Obsidian
+        // dispatching the reload; a short window is enough for the echo.
+        this.suppressReloadUntil = Date.now() + 2000;
+    }
 
     public setHtml(html: string): void {
         this.contentEl.empty();

@@ -4,7 +4,6 @@ import { PdfMessageHandlers } from './messageHandlers/pdfMessageHandlers';
 import { TextMessageHandlers } from './messageHandlers/textMessageHandlers';
 import { WebviewMessage } from './messageHandlers/types';
 import { MessageContext } from './messageHandlers/context';
-import { openSharedLinkCommand, shareFileCommand } from '../shareCommand';
 
 export type { WebviewMessage } from './messageHandlers/types';
 export type { MessageContext } from './messageHandlers/context';
@@ -64,12 +63,6 @@ export class MessageHandler {
                 break;
             case 'resetMergePdfCache':
                 PdfMessageHandlers.resetMergedPdfCache(context);
-                break;
-            case 'omniViewerShare':
-                await shareFileCommand(context.app, context.file);
-                break;
-            case 'omniViewerOpenSharedLink':
-                await openSharedLinkCommand(context.app);
                 break;
         }
     }

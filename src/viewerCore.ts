@@ -26,6 +26,24 @@ export interface ViewerHost {
     setupDefaultMessages(customHandlers?: { [command: string]: (message: WebviewMessage) => void }): void;
     /** Convert an absolute filesystem path to a URL loadable inside the viewer (vscode: webview.asWebviewUri). */
     asWebviewUri(absolutePath: string): string;
+    /**
+     * Direct DOM mounting for omni-viewer-core viewers (Phase 1 pilot):
+     * clears the view content (disposing any previous core viewer) and
+     * returns a fresh container element to mount into. Optional — legacy
+     * template viewers keep using setHtml().
+     */
+    provideDomContainer?(): HTMLElement;
+    /** Register the active core viewer handle so the view disposes it on unload/re-render.
+     *  isDirty (when provided) lets the view skip re-renders that would discard unsaved edits. */
+    setCoreViewerHandle?(handle: { dispose(): void; isDirty?(): boolean }): void;
+    /**
+     * Signal that the viewer is about to overwrite its own source file
+     * (writeback). Obsidian's FileView re-invokes onLoadFile when the file
+     * changes on disk; without this, that self-triggered reload would remount
+     * the core viewer and reset its scroll/zoom/selection. The view suppresses
+     * the reload echo that immediately follows.
+     */
+    markInternalWrite?(): void;
 }
 
 export interface RenderContext {

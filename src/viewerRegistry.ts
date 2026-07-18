@@ -28,7 +28,8 @@ import {
 } from './viewers/automotiveViewers';
 import { parquetViewer } from './viewers/parquetViewer';
 import { shpViewer } from './viewers/shpViewer';
-import { excelViewer, hwpViewer, pdfViewer, pptViewer, psdViewer, wordViewer } from './viewers/officeViewers';
+import { pdfViewer } from './viewers/pdfViewer';
+import { excelViewer, hwpViewer, pptViewer, psdViewer, wordViewer } from './viewers/officeViewers';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     archiveViewer,

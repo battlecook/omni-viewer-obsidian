@@ -59,34 +59,6 @@ export const wordViewer: ViewerDefinition = {
     }
 };
 
-export const pdfViewer: ViewerDefinition = {
-    viewType: 'omni-viewer.pdfViewer',
-    displayName: 'PDF Editor',
-    extensions: ['pdf'],
-    icon: 'file-text',
-    errorContent: {
-        title: 'Failed to load PDF file',
-        message: 'Unable to load the PDF file due to an error:',
-        icon: '📄'
-    },
-    async render(ctx) {
-        const pdfBytes = await fs.promises.readFile(ctx.filePath);
-        const pdfBase64 = pdfBytes.toString('base64');
-        const pdfJsScriptUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.min.mjs'));
-        const pdfJsWorkerUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.worker.min.mjs'));
-
-        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'pdf/pdfViewer.html', {
-            fileName: ctx.fileName,
-            pdfBase64: pdfBase64,
-            pdfJsScriptUri: pdfJsScriptUri,
-            pdfJsWorkerUri: pdfJsWorkerUri
-        });
-
-        ctx.host.setHtml(html);
-        ctx.host.setupDefaultMessages();
-    }
-};
-
 export const pptViewer: ViewerDefinition = {
     viewType: 'omni-viewer.pptViewer',
     displayName: 'PowerPoint Viewer',
