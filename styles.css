@@ -24,9 +24,17 @@
     --omni-input-bg: var(--background-modifier-form-field);
     --omni-button-bg: var(--interactive-normal);
     --omni-button-hover-bg: var(--interactive-hover);
+    /* The office-family viewers (ppt/word/hwp) name the same token differently;
+       without this their toolbars keep the core's dark hardcoded fallback. */
+    --omni-control-bg: var(--interactive-normal);
     --omni-warning-fg: var(--text-warning);
     --omni-error-fg: var(--text-error);
     --omni-font: var(--font-interface);
     --omni-font-mono: var(--font-monospace);
     --omni-font-size: var(--font-ui-small);
+    /* Archive viewer uses a few differently-named tokens + its own extras. */
+    --omni-muted-fg: var(--text-muted);
+    --omni-mono-font: var(--font-monospace);
+    --omni-badge-bg: var(--background-modifier-border);
+    --omni-code-bg: var(--background-primary-alt);
 }

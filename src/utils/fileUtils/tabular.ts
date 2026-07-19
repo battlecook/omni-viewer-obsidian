@@ -30,36 +30,6 @@ export interface ParquetFileData {
     previewRowCount?: number;
 }
 
-export async function readCsvFile(filePath: string): Promise<{
-    headers: string[];
-    rows: string[][];
-    totalRows: number;
-    totalColumns: number;
-    fileSize: string;
-    delimiter: string;
-}> {
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    const lines = content.split('\n').filter((line) => line.trim() !== '');
-    const delimiter = getDelimitedFileDelimiter(filePath, lines);
-
-    if (lines.length === 0) {
-        throw new Error('CSV file is empty');
-    }
-
-    const rows = lines.map((line) => parseDelimitedLine(line, delimiter));
-    const headers = rows[0] || [];
-    const dataRows = rows.slice(1);
-
-    return {
-        headers,
-        rows: dataRows,
-        totalRows: dataRows.length,
-        totalColumns: headers.length,
-        fileSize: await getFileSize(filePath),
-        delimiter
-    };
-}
-
 export function getDelimitedFileDelimiter(filePath: string, lines: string[] = []): string {
     if (path.extname(filePath).toLowerCase() === '.tsv') {
         return '\t';
@@ -432,32 +402,6 @@ function countDelimiterOccurrences(line: string, delimiter: string): number {
     }
 
     return count;
-}
-
-function parseDelimitedLine(line: string, delimiter: string): string[] {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === delimiter && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-
-    result.push(current.trim());
-    return result;
 }
 
 function convertParquetValue(value: unknown, columnType?: ParquetColumnType): unknown {

@@ -4,65 +4,24 @@ import { Notice } from 'obsidian';
 import * as pdfLib from 'pdf-lib';
 import {
     mountPdfViewer,
-    type PdfJsModule,
     type PdfViewerContext,
     type PdfViewerHandle
 } from 'omni-viewer-core/viewers/pdf';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import { showOpenDialog, showSaveDialog } from '../platform';
-import { getBundledTextAsset } from '../utils/bundledAssets';
 import { ViewerDefinition } from '../viewerCore';
-
-const BUNDLED_PDF_JS = 'templates/vendor/pdfjs/pdf.min.mjs';
-const PDF_WORKER_ASSET = 'assets/pdfjs/pdf.worker.min.mjs';
-const BUNDLED_PDF_WORKER = 'templates/vendor/pdfjs/pdf.worker.min.mjs';
+import { createPdfjsAssetService, loadBundledPdfjs } from './pdfjsRuntime';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-}
-
-async function loadBundledPdfJs(objectUrls: Set<string>): Promise<PdfJsModule> {
-    const source = getBundledTextAsset(BUNDLED_PDF_JS);
-    if (!source) {
-        throw new Error('Bundled PDF.js module is missing.');
-    }
-
-    // Obsidian exposes Node's `process` in its Electron renderer. PDF.js uses
-    // that global to choose its Node canvas path, but this viewer is mounted in
-    // the browser DOM. Shadow it so PDF.js selects its DOM implementation.
-    const moduleUrl = URL.createObjectURL(new Blob([
-        'const process = undefined;\n',
-        source
-    ], { type: 'application/javascript' }));
-    objectUrls.add(moduleUrl);
-    return await import(moduleUrl) as PdfJsModule;
 }
 
 function createCoreContext(
     ctx: Parameters<ViewerDefinition['render']>[0],
     objectUrls: Set<string>
 ): PdfViewerContext {
-    let workerUrl: string | undefined;
-
     return {
-        assets: {
-            resolveAssetUrl: async (assetPath: string) => {
-                if (assetPath !== PDF_WORKER_ASSET) {
-                    throw new Error(`Unsupported PDF asset: ${assetPath}`);
-                }
-                if (!workerUrl) {
-                    const source = getBundledTextAsset(BUNDLED_PDF_WORKER);
-                    if (!source) {
-                        throw new Error('Bundled PDF.js worker is missing.');
-                    }
-                    workerUrl = URL.createObjectURL(new Blob([source], {
-                        type: 'application/javascript'
-                    }));
-                    objectUrls.add(workerUrl);
-                }
-                return workerUrl;
-            }
-        },
+        assets: createPdfjsAssetService(objectUrls),
         i18n: {
             t: (key, args) => resolveCatalogMessage(key, args)
         },
@@ -142,13 +101,12 @@ export const pdfViewer: ViewerDefinition = {
         try {
             const buffer = await ctx.app.vault.readBinary(ctx.file);
             const container = ctx.host.provideDomContainer();
-            let pdfJsPromise: Promise<PdfJsModule> | undefined;
             const handle = await mountPdfViewer(
                 { fileName: ctx.fileName, data: new Uint8Array(buffer) },
                 container,
                 createCoreContext(ctx, objectUrls),
                 {
-                    loadPdfjs: () => pdfJsPromise ??= loadBundledPdfJs(objectUrls),
+                    loadPdfjs: loadBundledPdfjs,
                     loadPdfLib: async () => pdfLib
                 }
             );

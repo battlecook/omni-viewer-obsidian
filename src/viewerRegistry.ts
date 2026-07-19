@@ -29,7 +29,8 @@ import {
 import { parquetViewer } from './viewers/parquetViewer';
 import { shpViewer } from './viewers/shpViewer';
 import { pdfViewer } from './viewers/pdfViewer';
-import { excelViewer, hwpViewer, pptViewer, psdViewer, wordViewer } from './viewers/officeViewers';
+import { pptViewer } from './viewers/pptViewer';
+import { excelViewer, hwpViewer, psdViewer, wordViewer } from './viewers/officeViewers';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     archiveViewer,

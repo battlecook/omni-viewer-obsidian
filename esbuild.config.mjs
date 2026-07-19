@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
+import fs from "fs";
 import { builtinModules } from "module";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -49,6 +50,21 @@ const context = await esbuild.context({
 				}));
 				build.onResolve({ filter: /^lie$/ }, () => ({
 					path: nativePromiseShimPath,
+				}));
+			},
+		},
+		{
+			// PDF.js inspects the Node `process` global to choose its Node vs
+			// browser code path. Obsidian's Electron renderer exposes `process`,
+			// so shadow it with a module-scoped `undefined` at build time: this
+			// forces PDF.js onto its browser DOM path (the same effect the old
+			// blob loader had by prepending the line, but with a static import
+			// instead of a review-flagged dynamic import()).
+			name: "pdfjs-process-shim",
+			setup(build) {
+				build.onLoad({ filter: /pdf\.min\.mjs$/ }, (args) => ({
+					contents: "const process = undefined;\n" + fs.readFileSync(args.path, "utf8"),
+					loader: "js",
 				}));
 			},
 		},

@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FileUtils } from '../utils/fileUtils';
 import { TemplateUtils } from '../utils/templateUtils';
-import { escapeJsonForHtmlScriptTag } from '../utils/htmlEscaping';
 import { ViewerDefinition } from '../viewerCore';
 
 export const excelViewer: ViewerDefinition = {
@@ -52,35 +51,6 @@ export const wordViewer: ViewerDefinition = {
                 sourceFormat: wordContent.sourceFormat,
                 wasConverted: wordContent.wasConverted
             }), 'utf8').toString('base64')
-        });
-
-        ctx.host.setHtml(html);
-        ctx.host.setupDefaultMessages();
-    }
-};
-
-export const pptViewer: ViewerDefinition = {
-    viewType: 'omni-viewer.pptViewer',
-    displayName: 'PowerPoint Viewer',
-    extensions: ['ppt', 'pptx'],
-    icon: 'presentation',
-    errorContent: {
-        title: 'Failed to load PowerPoint file',
-        message: 'Unable to parse and render the file:',
-        icon: '📽️'
-    },
-    async render(ctx) {
-        const pptContent = await FileUtils.readPresentationFile(ctx.filePath);
-        const pdfJsScriptUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.min.mjs'));
-        const pdfJsWorkerUri = ctx.host.asWebviewUri(path.join(ctx.templatesDir, 'vendor', 'pdfjs', 'pdf.worker.min.mjs'));
-
-        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'ppt/pptViewer.html', {
-            fileName: ctx.fileName,
-            fileSize: pptContent.fileSize,
-            totalSlides: String(pptContent.totalSlides),
-            presentationData: escapeJsonForHtmlScriptTag(JSON.stringify(pptContent)),
-            pdfJsScriptUri: pdfJsScriptUri,
-            pdfJsWorkerUri: pdfJsWorkerUri
         });
 
         ctx.host.setHtml(html);

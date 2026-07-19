@@ -1,6 +1,6 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, data, diagram, and automotive files.",
   "main": "main.js",
   "repository": {
@@ -48,7 +48,7 @@
     "hyparquet-compressors": "^1.1.1",
     "jszip": "^3.10.1",
     "music-metadata": "^11.8.3",
-    "omni-viewer-core": "^0.1.0",
+    "omni-viewer-core": "^0.4.0",
     "pdf-lib": "^1.17.1",
     "proj4": "^2.20.9",
     "shapefile": "^0.6.6",

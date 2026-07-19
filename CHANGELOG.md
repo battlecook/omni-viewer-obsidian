@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0] - 2026-07-19
+
+### Added
+- Archive: inline preview for audio, video, and image entries. Previously only plain-text entries could be previewed and every other entry was reported as unsupported.
+- Archive: save an individual entry to disk from the viewer.
+
+### Changed
+- Migrated the PowerPoint and archive viewers to the shared `omni-viewer-core` rendering engine, mounting the core viewer directly into the view instead of the iframe/template path (continuing the CSV/PDF migration from 0.1.2).
+- Archive: listing, entry preview, and save all stream through a path-based decoder, so multi-GB archives are inspected and extracted without loading the archive into memory.
+- PowerPoint: parsing and rendering now come from the core; the LibreOffice (`soffice`) PDF fallback for decks with no renderable slides is preserved, and its export is save-only so it can no longer overwrite the source `.ppt`/`.pptx` with PDF bytes.
+- Loaded PDF.js through a static import shimmed at build time instead of a dynamic `import()` of a blob URL.
+- Updated `omni-viewer-core` to 0.4.
+
+### Removed
+- Deleted the viewer code the core migrations replaced: the archive/CSV/PDF/PowerPoint templates, the vendored PPTX and legacy-PPT binary parsers, the eager archive reader, and the unused HWP document parser (HWP rendering goes through the bundled `rhwp` WebAssembly module). About 17k lines in total, shrinking `main.js`.
+
+### Fixed
+- Archive: `rar`/`7z`/`dmg`/`tar` archives no longer fail to open when Obsidian is launched outside a login shell (for example from the macOS Dock), where the inherited `PATH` omits Homebrew/MacPorts and the `7z`/`tar` binaries could not be found.
+- Themed the toolbars of the office-family and archive viewers, which previously kept the core's hardcoded dark fallback colors instead of the Obsidian theme.
+
 ## [0.1.2] - 2026-07-18
 
 ### Changed
