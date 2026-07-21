@@ -3,6 +3,17 @@
     overflow: hidden;
 }
 
+.is-mobile .omni-viewer-content {
+    padding-bottom: env(safe-area-inset-bottom);
+    touch-action: pan-x pan-y;
+}
+
+.is-mobile .omni-viewer-content button,
+.is-mobile .omni-viewer-content input,
+.is-mobile .omni-viewer-content select {
+    font-size: max(16px, var(--font-ui-small));
+}
+
 .omni-viewer-content .omni-viewer-frame {
     width: 100%;
     height: 100%;
@@ -18,16 +29,25 @@
     --omni-bg-secondary: var(--background-secondary);
     --omni-fg: var(--text-normal);
     --omni-fg-muted: var(--text-muted);
+    --omni-muted: var(--text-muted);
     --omni-border: var(--background-modifier-border);
     --omni-accent: var(--interactive-accent);
     --omni-accent-fg: var(--text-on-accent);
     --omni-input-bg: var(--background-modifier-form-field);
     --omni-button-bg: var(--interactive-normal);
     --omni-button-hover-bg: var(--interactive-hover);
+    --omni-toolbar-bg: var(--background-secondary);
+    --omni-header-bg: var(--background-secondary);
+    --omni-hover: var(--background-modifier-hover);
     /* The office-family viewers (ppt/word/hwp) name the same token differently;
        without this their toolbars keep the core's dark hardcoded fallback. */
     --omni-control-bg: var(--interactive-normal);
+    /* Word/hwp header + error text; unmapped these fall back to dark #252526 /
+       #f48771 and ignore the Obsidian theme. */
+    --omni-panel-bg: var(--background-secondary);
+    --omni-danger: var(--text-error);
     --omni-warning-fg: var(--text-warning);
+    --omni-warning-bg: var(--background-modifier-warning);
     --omni-error-fg: var(--text-error);
     --omni-font: var(--font-interface);
     --omni-font-mono: var(--font-monospace);

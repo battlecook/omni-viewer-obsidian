@@ -1,11 +1,11 @@
 {
   "id": "omni-viewer",
   "name": "Omni Viewer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minAppVersion": "1.4.0",
-  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, parquet, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
+  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, parquet, Safetensors, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
   "author": "battlecook",
   "authorUrl": "https://github.com/battlecook",
   "fundingUrl": "https://github.com/sponsors/battlecook",
-  "isDesktopOnly": true
+  "isDesktopOnly": false
 }

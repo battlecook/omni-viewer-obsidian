@@ -13,7 +13,7 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 | Tabular | csv, tsv, xlsx, xls, parquet, jsonl/ndjson/jsonlines |
 | Automotive / measurement | dbc, arxml, a2l, asc, blf, mf4, avro, bag (ROS), db3 (SQLite), reqif, pcap, pcapng, stp/step, h5/hdf5/he5, mat |
 | Documents | pdf (view + annotate/merge/save), docx/doc, ppt/pptx, hwp/hwpx, psd, md/markdown |
-| Data / source | json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
+| Data / source | safetensors, json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
 | GIS | shp (Shapefile) |
 
 ## Features carried over from the vscode extension
@@ -51,7 +51,17 @@ Then copy the following into `<vault>/.obsidian/plugins/omni-viewer/`:
 
 The viewer templates, bundled JavaScript, and WASM assets are embedded into `main.js` during `npm run build`, so no extra asset folders are required.
 
-Enable **Omni Viewer** in Settings → Community plugins. The plugin is desktop-only.
+Enable **Omni Viewer** in Settings → Community plugins. The same bundle runs on desktop, Android, and iOS.
+
+### Mobile support
+
+On Obsidian mobile, Omni Viewer uses vault APIs instead of local filesystem paths. Mobile currently supports:
+
+- ZIP/JAR/APK, audio/image/browser-native video, CSV, PDF, Safetensors, JSON/JSONL, YAML, TOML, DBC
+- Markdown, Mermaid, PlantUML, Protocol Buffer schemas
+- XLS/XLSX, DOCX, HWP/HWPX, PPT/PPTX
+
+Files created by Save As, PDF merge selection, and archive extraction stay inside the current vault. Desktop-only native helpers are intentionally unavailable on mobile: RAR/7z/DMG/system-tar extraction, ffmpeg transcoding, LibreOffice PDF fallback, and legacy DOC rendering. Browser codec support can differ between Android and iOS.
 
 ## Architecture notes
 

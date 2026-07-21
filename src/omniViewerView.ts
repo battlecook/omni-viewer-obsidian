@@ -1,6 +1,5 @@
-import { FileSystemAdapter, FileView, Notice, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
+import { FileSystemAdapter, FileView, Notice, Platform, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
 import * as path from 'path';
-import { pathToFileURL } from 'url';
 import { MessageHandler } from './utils/messageHandler';
 import { WebviewMessage } from './utils/messageHandlers/types';
 import { MessageContext } from './utils/messageHandlers/context';
@@ -23,6 +22,19 @@ const BRIDGE_SCRIPT = `<script>
     window.acquireVsCodeApi = function () { return api; };
 })();
 </script>`;
+
+const MOBILE_TEMPLATE_STYLE = `<style id="omni-mobile-overrides">
+@media (max-width: 760px), (pointer: coarse) {
+    html, body { max-width: 100%; overscroll-behavior: contain; }
+    body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    button, [role="button"], input, select { min-height: 40px; }
+    .header, .toolbar, .controls, .playback-controls { flex-wrap: wrap !important; gap: 8px !important; }
+    .modal { min-width: 0 !important; width: calc(100vw - 24px) !important; max-width: calc(100vw - 24px) !important; max-height: calc(100vh - 24px); overflow: auto; }
+    .word-content, .word-content.legacy-mode { min-width: 0 !important; width: 100% !important; padding: 16px !important; }
+    .container { max-width: 100% !important; }
+    table { touch-action: pan-x pan-y; }
+}
+</style>`;
 
 type MessageListener = (message: WebviewMessage) => void | Promise<void>;
 
@@ -183,12 +195,14 @@ export class OmniViewerView extends FileView implements ViewerHost {
         this.defaultListener = null;
         this.disposeCoreViewer();
 
-        const absPath = this.getAbsolutePath(file);
+        const filePath = this.getFilePath(file);
 
         try {
             // Signature-based rerouting (vscode: rerouteIfNeeded). If the file
             // content matches another registered omni viewer better, switch views.
-            const detection = await FileUtils.detectViewerType(absPath, this.definition.viewType as OmniViewerViewType);
+            const detection = Platform.isMobileApp
+                ? { viewType: this.definition.viewType as OmniViewerViewType, reason: 'Mobile vault path' }
+                : await FileUtils.detectViewerType(filePath, this.definition.viewType as OmniViewerViewType);
             if (detection.viewType
                 && detection.viewType !== this.definition.viewType
                 && this.registeredViewTypes.has(detection.viewType)) {
@@ -208,7 +222,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
                 templatesDir: this.templatesDir,
                 wasmDir: this.wasmDir,
                 file,
-                filePath: absPath,
+                filePath,
                 fileName: file.name,
                 host: this
             };
@@ -301,14 +315,19 @@ export class OmniViewerView extends FileView implements ViewerHost {
         if (vaultPath !== null) {
             return this.app.vault.adapter.getResourcePath(vaultPath);
         }
-        return pathToFileURL(absolutePath).toString();
+        return `file://${encodeURI(absolutePath)}`;
     }
 
     // ---------------------------------------------------------------- helpers
 
     private prepareHtml(html: string): string {
         const themeStyle = `<style>\n${buildVscodeThemeCss(this.containerEl)}\n</style>`;
-        const injection = `${BRIDGE_SCRIPT}\n${themeStyle}`;
+        const injection = `${BRIDGE_SCRIPT}\n${themeStyle}${Platform.isMobileApp ? `\n${MOBILE_TEMPLATE_STYLE}` : ''}`;
+
+        const headCloseMatch = /<\/head>/i.exec(html);
+        if (headCloseMatch && headCloseMatch.index !== undefined) {
+            return html.slice(0, headCloseMatch.index) + injection + '\n' + html.slice(headCloseMatch.index);
+        }
 
         const headMatch = /<head[^>]*>/i.exec(html);
         if (headMatch && headMatch.index !== undefined) {
@@ -328,7 +347,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
         return {
             app: this.app,
             file,
-            absPath: this.getAbsolutePath(file),
+            absPath: this.getFilePath(file),
             postMessage: (message: unknown) => this.postMessage(message),
             reopen: async (absPath: string, viewType: string) => {
                 const vaultPath = this.toVaultPath(absPath);
@@ -343,18 +362,18 @@ export class OmniViewerView extends FileView implements ViewerHost {
         };
     }
 
-    private getAbsolutePath(file: TFile): string {
+    private getFilePath(file: TFile): string {
         const adapter = this.app.vault.adapter;
         if (adapter instanceof FileSystemAdapter) {
             return adapter.getFullPath(file.path);
         }
-        throw new Error('Omni Viewer requires a local vault (desktop only).');
+        return file.path;
     }
 
     private toVaultPath(absolutePath: string): string | null {
         const adapter = this.app.vault.adapter;
         if (!(adapter instanceof FileSystemAdapter)) {
-            return null;
+            return normalizePath(absolutePath);
         }
         const relative = path.relative(adapter.getBasePath(), absolutePath);
         if (relative.startsWith('..') || path.isAbsolute(relative)) {

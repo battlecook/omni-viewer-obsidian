@@ -28,36 +28,6 @@ export const excelViewer: ViewerDefinition = {
     }
 };
 
-export const wordViewer: ViewerDefinition = {
-    viewType: 'omni-viewer.wordViewer',
-    displayName: 'Word Viewer',
-    extensions: ['docx', 'doc'],
-    icon: 'file-type',
-    errorContent: {
-        title: 'Failed to load Word file',
-        message: 'Unable to load the file:',
-        icon: '📄'
-    },
-    async render(ctx) {
-        const wordContent = await FileUtils.readWordFile(ctx.filePath);
-        const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'word/wordViewer.html', {
-            fileName: ctx.fileName,
-            wordContent: wordContent.renderer === 'legacy-html' ? (wordContent.htmlContent || '') : '',
-            fileSize: wordContent.fileSize || '',
-            wordConfigJson: Buffer.from(JSON.stringify({
-                renderer: wordContent.renderer,
-                docxBase64: wordContent.docxBase64,
-                htmlContent: wordContent.htmlContent,
-                sourceFormat: wordContent.sourceFormat,
-                wasConverted: wordContent.wasConverted
-            }), 'utf8').toString('base64')
-        });
-
-        ctx.host.setHtml(html);
-        ctx.host.setupDefaultMessages();
-    }
-};
-
 function formatFileSize(bytes: number): string {
     if (!Number.isFinite(bytes) || bytes < 0) {
         return '';

@@ -104,35 +104,28 @@ export async function readJsonlFilePreview(
     }
 }
 
-export async function readJsonFile(filePath: string): Promise<{
-    formattedJson: string;
-    parsedJson: unknown;
-    fileSize: string;
-}> {
-    const content = await fs.promises.readFile(filePath, 'utf-8');
-    const parsedJson = JSON.parse(content);
-
-    return {
-        formattedJson: JSON.stringify(parsedJson, null, 2),
-        parsedJson,
-        fileSize: await getFileSize(filePath)
-    };
-}
-
 export async function readParquetFile(filePath: string, options: ParquetReadOptions = {}): Promise<ParquetFileData> {
     const stats = await fs.promises.stat(filePath);
     const fileSizeBytes = stats.size;
     const fileSizeMB = fileSizeBytes / (1024 * 1024);
 
-    const hyparquet = await import('hyparquet') as unknown as typeof import('hyparquet') & {
-        asyncBufferFromFile: (filename: string) => Promise<{
-            byteLength: number;
-            slice(start: number, end?: number): Promise<ArrayBuffer>;
-        }>;
-    };
-    const { asyncBufferFromFile, parquetMetadataAsync, parquetReadObjects, parquetSchema } = hyparquet;
+    const hyparquet = await import('hyparquet');
+    const { parquetMetadataAsync, parquetReadObjects, parquetSchema } = hyparquet;
     const { compressors } = await import('hyparquet-compressors');
-    const asyncBuffer = await asyncBufferFromFile(filePath);
+    const asyncBuffer = {
+        byteLength: fileSizeBytes,
+        async slice(start: number, end = fileSizeBytes): Promise<ArrayBuffer> {
+            const handle = await fs.promises.open(filePath, 'r');
+            try {
+                const length = Math.max(0, end - start);
+                const bytes = Buffer.alloc(length);
+                const { bytesRead } = await handle.read(bytes, 0, length, start);
+                return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytesRead) as ArrayBuffer;
+            } finally {
+                await handle.close();
+            }
+        }
+    };
 
     let schema: unknown = null;
     let metadata: unknown = null;

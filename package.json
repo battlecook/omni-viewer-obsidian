@@ -1,6 +1,6 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, data, diagram, and automotive files.",
   "main": "main.js",
   "repository": {
@@ -33,7 +33,8 @@
     "parquet",
     "shapefile",
     "hdf5",
-    "mat"
+    "mat",
+    "safetensors"
   ],
   "devDependencies": {
     "@types/node": "^16.18.0",
@@ -43,15 +44,24 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "assert": "^2.1.0",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
+    "docx-preview": "^0.3.7",
+    "events": "^3.3.0",
     "hwp.js": "^0.0.3",
     "hyparquet": "^1.21.0",
     "hyparquet-compressors": "^1.1.1",
     "jszip": "^3.10.1",
     "music-metadata": "^11.8.3",
-    "omni-viewer-core": "^0.4.0",
+    "omni-viewer-core": "^0.6.0",
+    "path-browserify": "^1.0.1",
     "pdf-lib": "^1.17.1",
+    "process": "^0.11.10",
     "proj4": "^2.20.9",
     "shapefile": "^0.6.6",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "^2.8.3"
   }

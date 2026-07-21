@@ -221,7 +221,12 @@ export async function getAudioMetadata(filePath: string): Promise<{
     }
 
     try {
-        const metadata = await mm.parseFile(filePath);
+        // The shared desktop/mobile bundle resolves music-metadata's browser
+        // entry. Feed it bytes explicitly instead of selecting its Node-only
+        // parseFile API; this also keeps metadata parsing consistent across
+        // Obsidian platforms.
+        const audioBytes = await fs.promises.readFile(filePath);
+        const metadata = await mm.parseBuffer(audioBytes, getAudioMimeType(filePath));
         const format = metadata.format;
 
         return {

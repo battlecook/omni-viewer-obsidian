@@ -72,7 +72,9 @@ export async function readShapefile(filePath: string, options: ShapefileReadOpti
     const prj = await readOptionalText(sidecars.prj.path);
     const cpg = (await readOptionalText(sidecars.cpg.path))?.trim();
     const projection = createProjection(prj, warnings);
-    const source = await shapefile.open<GeoJsonFeature>(filePath, sidecars.dbf.exists ? sidecars.dbf.path : undefined, {
+    const shpBytes = await fs.promises.readFile(filePath);
+    const dbfBytes = sidecars.dbf.exists ? await fs.promises.readFile(sidecars.dbf.path) : undefined;
+    const source = await shapefile.open<GeoJsonFeature>(shpBytes, dbfBytes, {
         encoding: cpg || undefined
     });
 

@@ -30,7 +30,9 @@ import { parquetViewer } from './viewers/parquetViewer';
 import { shpViewer } from './viewers/shpViewer';
 import { pdfViewer } from './viewers/pdfViewer';
 import { pptViewer } from './viewers/pptViewer';
-import { excelViewer, hwpViewer, psdViewer, wordViewer } from './viewers/officeViewers';
+import { excelViewer, hwpViewer, psdViewer } from './viewers/officeViewers';
+import { wordViewer } from './viewers/wordViewer';
+import { safetensorsViewer } from './viewers/safetensorsViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     archiveViewer,
@@ -63,6 +65,7 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     shpViewer,
     hdf5Viewer,
     matViewer,
+    safetensorsViewer,
     hwpViewer,
     psdViewer,
     excelViewer,

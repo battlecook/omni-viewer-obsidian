@@ -11,7 +11,10 @@ import * as path from 'path';
 import { mountCsvViewer } from 'omni-viewer-core/viewers/csv';
 import type { CsvViewerContext } from 'omni-viewer-core/viewers/csv';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
+import { Platform } from 'obsidian';
 import { showSaveDialog } from '../platform';
+import { saveBinaryBesideFile } from '../utils/vaultFiles';
+import { applyMobileCoreStyles } from '../utils/mobileUi';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
@@ -49,6 +52,10 @@ function coreHostContext(renderCtx: RenderContext): CsvViewerContext {
     // and the rest of the plugin (mediaMessageHandlers / legacy pdfMessageHandlers).
     ctx.save = {
         saveFile: async (name, data) => {
+            if (Platform.isMobileApp) {
+                await saveBinaryBesideFile(app, file, name, data);
+                return;
+            }
             const targetPath = await showSaveDialog(
                 path.join(path.dirname(filePath), name),
                 [{ name: 'Delimited text', extensions: ['csv', 'tsv', 'txt'] }]
@@ -88,6 +95,7 @@ export const csvViewer: ViewerDefinition = {
             container,
             coreHostContext(ctx)
         );
+        applyMobileCoreStyles(container);
         ctx.host.setCoreViewerHandle(handle);
     }
 };

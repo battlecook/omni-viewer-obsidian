@@ -14,14 +14,12 @@ import {
 import {
     getDelimitedFileDelimiter as detectDelimitedFileDelimiter,
     readExcelFile as readWorkbookFile,
-    readJsonFile as readStructuredJsonFile,
     readJsonlFile as readJsonlLines,
     readJsonlFilePreview as readJsonlPreview,
     readParquetFile as readParquetRows,
     ParquetFileData,
     ParquetReadOptions
 } from './fileUtils/tabular';
-import { readWordFile as readWordDocument } from './fileUtils/word';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 
 export type OmniViewerViewType =
@@ -55,6 +53,7 @@ export type OmniViewerViewType =
     | 'omni-viewer.shpViewer'
     | 'omni-viewer.hdf5Viewer'
     | 'omni-viewer.matViewer'
+    | 'omni-viewer.safetensorsViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -312,6 +311,14 @@ export class FileUtils {
             return {
                 viewType: 'omni-viewer.shpViewer',
                 reason: 'Used the Shapefile extension fallback.',
+                matchedBySignature: false
+            };
+        }
+
+        if (ext === '.safetensors') {
+            return {
+                viewType: 'omni-viewer.safetensorsViewer',
+                reason: 'Used the Safetensors extension fallback.',
                 matchedBySignature: false
             };
         }
@@ -995,14 +1002,6 @@ export class FileUtils {
         return readJsonlPreview(filePath, previewBytes);
     }
 
-    public static async readJsonFile(filePath: string): Promise<{
-        formattedJson: string;
-        parsedJson: unknown;
-        fileSize: string;
-    }> {
-        return readStructuredJsonFile(filePath);
-    }
-
     public static async readParquetFile(filePath: string, options: ParquetReadOptions = {}): Promise<ParquetFileData> {
         return readParquetRows(filePath, options);
     }
@@ -1023,17 +1022,6 @@ export class FileUtils {
         fileSize: string;
     }> {
         return readWorkbookFile(filePath);
-    }
-
-    public static async readWordFile(filePath: string): Promise<{
-        renderer: 'docx-preview' | 'legacy-html';
-        docxBase64?: string;
-        htmlContent?: string;
-        sourceFormat: 'docx' | 'doc';
-        wasConverted: boolean;
-        fileSize: string;
-    }> {
-        return readWordDocument(filePath);
     }
 
     /** Public so the core-backed PPT viewer can wire it as its `convertToPdf`

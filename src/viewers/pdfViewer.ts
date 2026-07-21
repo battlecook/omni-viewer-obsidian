@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Notice } from 'obsidian';
+import { Notice, Platform } from 'obsidian';
 import * as pdfLib from 'pdf-lib';
 import {
     mountPdfViewer,
@@ -11,6 +11,8 @@ import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import { showOpenDialog, showSaveDialog } from '../platform';
 import { ViewerDefinition } from '../viewerCore';
 import { createPdfjsAssetService, loadBundledPdfjs } from './pdfjsRuntime';
+import { pickVaultFile, saveBinaryBesideFile } from '../utils/vaultFiles';
+import { applyMobileCoreStyles } from '../utils/mobileUi';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
@@ -41,6 +43,10 @@ function createCoreContext(
         },
         save: {
             saveFile: async (name, data) => {
+                if (Platform.isMobileApp) {
+                    await saveBinaryBesideFile(ctx.app, ctx.file, name, data);
+                    return;
+                }
                 const targetPath = await showSaveDialog(
                     path.join(path.dirname(ctx.filePath), name),
                     [{ name: 'PDF files', extensions: ['pdf'] }]
@@ -52,6 +58,16 @@ function createCoreContext(
         filePick: {
             pickFile: async ({ maxBytes }) => {
                 try {
+                    if (Platform.isMobileApp) {
+                        const selected = await pickVaultFile(ctx.app, ['pdf']);
+                        if (!selected) return undefined;
+                        const data = new Uint8Array(await ctx.app.vault.readBinary(selected));
+                        if (maxBytes !== undefined && data.byteLength > maxBytes) {
+                            new Notice(`PDF is too large to merge (maximum ${maxBytes} bytes).`);
+                            return undefined;
+                        }
+                        return { fileName: selected.name, data, mimeType: 'application/pdf' };
+                    }
                     const selectedPath = await showOpenDialog([
                         { name: 'PDF files', extensions: ['pdf'] }
                     ]);
@@ -110,9 +126,15 @@ export const pdfViewer: ViewerDefinition = {
                     loadPdfLib: async () => pdfLib
                 }
             );
+            applyMobileCoreStyles(container);
             const managedHandle: PdfViewerHandle = {
                 controller: handle.controller,
+                get operation() {
+                    return handle.operation;
+                },
                 isDirty: () => handle.isDirty(),
+                cancelOperation: () => handle.cancelOperation(),
+                refreshToolbarActions: () => handle.refreshToolbarActions(),
                 dispose: () => {
                     handle.dispose();
                     disposeObjectUrls();

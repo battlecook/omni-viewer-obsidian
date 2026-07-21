@@ -12,6 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { Platform } from 'obsidian';
 import type { FileSaveService, HostContext } from 'omni-viewer-core/host';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import { mountPptViewer, type PptViewerHandle } from 'omni-viewer-core/viewers/ppt';
@@ -19,6 +20,8 @@ import { showSaveDialog } from '../platform';
 import { FileUtils } from '../utils/fileUtils';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 import { createPdfjsAssetService, loadBundledPdfjs } from './pdfjsRuntime';
+import { saveBinaryBesideFile } from '../utils/vaultFiles';
+import { applyMobileCoreStyles } from '../utils/mobileUi';
 
 type PptHostContext = HostContext & { save: FileSaveService };
 
@@ -42,6 +45,10 @@ function coreHostContext(renderCtx: RenderContext, objectUrls: Set<string>): Ppt
         // .ppt/.pptx with PDF bytes.
         save: {
             saveFile: async (name, data) => {
+                if (Platform.isMobileApp) {
+                    await saveBinaryBesideFile(renderCtx.app, renderCtx.file, name, data);
+                    return;
+                }
                 const targetPath = await showSaveDialog(
                     path.join(path.dirname(filePath), name),
                     [{ name: 'PDF files', extensions: ['pdf'] }]
@@ -77,11 +84,9 @@ export const pptViewer: ViewerDefinition = {
         try {
             const buffer = await ctx.app.vault.readBinary(ctx.file);
             const container = ctx.host.provideDomContainer();
-            const handle = await mountPptViewer(
-                { fileName: ctx.fileName, data: new Uint8Array(buffer) },
-                container,
-                coreHostContext(ctx, objectUrls),
-                {
+            const deps = Platform.isMobileApp
+                ? { loadPdfjs: loadBundledPdfjs }
+                : {
                     loadPdfjs: loadBundledPdfjs,
                     // soffice reads from disk, so convert the file in place and
                     // ignore the bytes the core hands us (same content).
@@ -89,8 +94,14 @@ export const pptViewer: ViewerDefinition = {
                         const pdf = await FileUtils.convertPresentationToPdf(ctx.filePath);
                         return new Uint8Array(pdf);
                     }
-                }
+                };
+            const handle = await mountPptViewer(
+                { fileName: ctx.fileName, data: new Uint8Array(buffer) },
+                container,
+                coreHostContext(ctx, objectUrls),
+                deps
             );
+            applyMobileCoreStyles(container);
             const managedHandle: PptViewerHandle = {
                 controller: handle.controller,
                 mode: handle.mode,

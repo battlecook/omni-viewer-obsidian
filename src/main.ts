@@ -1,7 +1,8 @@
-import { FileSystemAdapter, Menu, Notice, Plugin, TFile } from 'obsidian';
+import { FileSystemAdapter, Menu, Platform, Plugin, TFile } from 'obsidian';
 import * as path from 'path';
 import { OmniViewerView, createViewFactory } from './omniViewerView';
 import { VIEWER_DEFINITIONS } from './viewerRegistry';
+import { MOBILE_VIEWER_DEFINITIONS } from './mobileViewerRegistry';
 import { ViewerDefinition } from './viewerCore';
 import { openSharedLinkCommand, shareFileCommand } from './shareCommand';
 
@@ -12,16 +13,20 @@ export default class OmniViewerPlugin extends Plugin {
 
     async onload(): Promise<void> {
         const adapter = this.app.vault.adapter;
-        if (!(adapter instanceof FileSystemAdapter)) {
-            new Notice('Omni Viewer requires a local vault (desktop only).');
-            return;
+        if (adapter instanceof FileSystemAdapter) {
+            const pluginDir = path.join(adapter.getBasePath(), this.manifest.dir ?? '');
+            this.templatesDir = path.join(pluginDir, 'templates');
+            this.wasmDir = path.join(pluginDir, 'wasm');
+        } else {
+            // Assets are embedded in main.js; logical keys avoid requiring a
+            // local plug-in directory on Android/iOS vault adapters.
+            this.templatesDir = 'templates';
+            this.wasmDir = 'wasm';
         }
 
-        const pluginDir = path.join(adapter.getBasePath(), this.manifest.dir ?? '');
-        this.templatesDir = path.join(pluginDir, 'templates');
-        this.wasmDir = path.join(pluginDir, 'wasm');
+        const definitions = Platform.isMobileApp ? MOBILE_VIEWER_DEFINITIONS : VIEWER_DEFINITIONS;
 
-        for (const definition of VIEWER_DEFINITIONS) {
+        for (const definition of definitions) {
             this.registeredViewTypes.add(definition.viewType);
             this.registerView(
                 definition.viewType,
@@ -96,7 +101,8 @@ export default class OmniViewerPlugin extends Plugin {
 
     private addFileMenuItems(menu: Menu, file: TFile): void {
         const extension = file.extension.toLowerCase();
-        const matching = VIEWER_DEFINITIONS.filter((definition) => definition.extensions.includes(extension));
+        const definitions = Platform.isMobileApp ? MOBILE_VIEWER_DEFINITIONS : VIEWER_DEFINITIONS;
+        const matching = definitions.filter((definition) => definition.extensions.includes(extension));
 
         for (const definition of matching) {
             menu.addItem((item) => item

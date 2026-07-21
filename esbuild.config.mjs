@@ -15,12 +15,31 @@ const prod = process.argv[2] === "production";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const setImmediateShimPath = path.join(dirname, "src/shims/setimmediate.ts");
 const nativePromiseShimPath = path.join(dirname, "src/shims/nativePromise.cjs");
+const globalsShimPath = path.join(dirname, "src/shims/globals.ts");
+const browserAliases = new Map([
+	["buffer", path.join(dirname, "node_modules/buffer/index.js")],
+	["path", path.join(dirname, "src/shims/desktopPath.ts")],
+	["process", path.join(dirname, "node_modules/process/browser.js")],
+	["stream", path.join(dirname, "node_modules/stream-browserify/index.js")],
+	["zlib", path.join(dirname, "src/shims/desktopZlib.ts")],
+	["util", path.join(dirname, "node_modules/util/util.js")],
+	["events", path.join(dirname, "node_modules/events/events.js")],
+	["assert", path.join(dirname, "node_modules/assert/build/assert.js")],
+	["string_decoder/", path.join(dirname, "node_modules/string_decoder/lib/string_decoder.js")],
+	["fs", path.join(dirname, "src/shims/desktopFs.ts")],
+	["node:fs", path.join(dirname, "src/shims/desktopFs.ts")],
+	["fs/promises", path.join(dirname, "src/shims/desktopFsPromises.ts")],
+	["child_process", path.join(dirname, "src/shims/desktopChildProcess.ts")],
+	["os", path.join(dirname, "src/shims/desktopOs.ts")],
+	["stream/promises", path.join(dirname, "src/shims/desktopStreamPromises.ts")],
+]);
 
 const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
 	entryPoints: ["src/main.ts"],
+	inject: [globalsShimPath],
 	bundle: true,
 	external: [
 		"obsidian",
@@ -36,12 +55,20 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtinModules,
+		...builtinModules.filter((name) => !browserAliases.has(name) && name !== "string_decoder"),
 	],
 	format: "cjs",
 	target: "es2020",
 	logLevel: "info",
 	plugins: [
+		{
+			name: "mobile-node-compat",
+			setup(build) {
+				build.onResolve({ filter: /^(buffer|path|process|stream|zlib|util|events|assert|string_decoder\/|fs|node:fs|fs\/promises|child_process|os|stream\/promises)$/ }, (args) => ({
+					path: browserAliases.get(args.path),
+				}));
+			}
+		},
 		{
 			name: "safe-setimmediate-shim",
 			setup(build) {
@@ -72,7 +99,7 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
-	platform: "node",
+	platform: "browser",
 	minify: prod,
 });
 

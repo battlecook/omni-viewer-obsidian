@@ -1,7 +1,5 @@
-import { App, Notice, TFile, normalizePath } from 'obsidian';
-import * as https from 'https';
+import { App, Notice, TFile, normalizePath, requestUrl } from 'obsidian';
 import * as path from 'path';
-import { URL } from 'url';
 import { openExternal, promptText } from './platform';
 
 const SHARE_API_BASE = 'https://omni-viewer-share-624036133562.us-west1.run.app';
@@ -42,33 +40,17 @@ interface DownloadTicket {
 }
 
 function send(method: string, url: string, headers: Record<string, string | number>, body?: Buffer): Promise<HttpResponse> {
-    const u = new URL(url);
-    const port = u.port ? Number(u.port) : 443;
-    const finalHeaders: Record<string, string | number> = { ...headers };
-    if (body !== undefined) {
-        finalHeaders['Content-Length'] = body.length;
-    }
-    const options: https.RequestOptions = {
-        hostname: u.hostname,
-        port,
-        path: u.pathname + u.search,
+    const finalHeaders = Object.fromEntries(Object.entries(headers).map(([key, value]) => [key, String(value)]));
+    const bodyArrayBuffer = body
+        ? body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer
+        : undefined;
+    return requestUrl({
+        url,
         method,
-        headers: finalHeaders
-    };
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            const chunks: Buffer[] = [];
-            res.on('data', (chunk: Buffer) => chunks.push(chunk));
-            res.on('end', () => {
-                resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks) });
-            });
-        });
-        req.on('error', reject);
-        if (body !== undefined) {
-            req.write(body);
-        }
-        req.end();
-    });
+        headers: finalHeaders,
+        ...(bodyArrayBuffer ? { body: bodyArrayBuffer } : {}),
+        throw: false
+    }).then((response) => ({ status: response.status, body: Buffer.from(response.arrayBuffer) }));
 }
 
 function postJson(url: string, payload: object, extraHeaders: Record<string, string> = {}): Promise<HttpResponse> {

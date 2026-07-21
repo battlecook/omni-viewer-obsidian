@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0] - 2026-07-22
+
+### Added
+- Added a Safetensors viewer backed by `omni-viewer-core`, including tensor/metadata tables, search, structure preview, and JSON copy.
+- Added vault-backed mobile viewers, save-as, PDF file selection, and ZIP extraction.
+
+### Changed
+- Updated `omni-viewer-core` to 0.6.0.
+- Added a shared desktop/mobile bundle with browser-compatible Node shims.
+- Replaced the share service's Node HTTPS transport with Obsidian's cross-platform request API.
+- Added responsive and touch-oriented viewer overrides for Android and iOS.
+
+### Fixed
+- Prevented mobile image exports from silently overwriting existing vault files and rejected folder paths in export names.
+- Connected mobile audio download and region-export actions to vault-backed save-as handling.
+
 ## [0.2.0] - 2026-07-19
 
 ### Added
