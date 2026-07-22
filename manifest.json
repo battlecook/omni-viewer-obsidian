@@ -1,7 +1,7 @@
 {
   "id": "omni-viewer",
   "name": "Omni Viewer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "minAppVersion": "1.4.0",
   "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, PSD, parquet, Safetensors, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
   "author": "battlecook",

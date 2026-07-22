@@ -21,7 +21,6 @@ import { FileUtils } from '../utils/fileUtils';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 import { createPdfjsAssetService, loadBundledPdfjs } from './pdfjsRuntime';
 import { saveBinaryBesideFile } from '../utils/vaultFiles';
-import { applyMobileCoreStyles } from '../utils/mobileUi';
 
 type PptHostContext = HostContext & { save: FileSaveService };
 
@@ -101,7 +100,6 @@ export const pptViewer: ViewerDefinition = {
                 coreHostContext(ctx, objectUrls),
                 deps
             );
-            applyMobileCoreStyles(container);
             const managedHandle: PptViewerHandle = {
                 controller: handle.controller,
                 mode: handle.mode,

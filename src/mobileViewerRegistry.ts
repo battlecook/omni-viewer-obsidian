@@ -17,7 +17,6 @@ import { pptViewer } from './viewers/pptViewer';
 import { safetensorsViewer } from './viewers/safetensorsViewer';
 import { mobileWordViewer } from './viewers/wordViewer';
 import { saveBinaryBesideFile } from './utils/vaultFiles';
-import { applyMobileCoreStyles } from './utils/mobileUi';
 import { confirmDialog } from './platform';
 
 const MAX_MOBILE_DOCUMENT_BYTES = 50 * 1024 * 1024;
@@ -310,7 +309,6 @@ const archiveViewer: ViewerDefinition = {
             decoder,
             { limits: { maxInputBytes: 128 * 1024 * 1024, maxDecompressedBytes: 256 * 1024 * 1024 } }
         );
-        applyMobileCoreStyles(container);
         ctx.host.setCoreViewerHandle(handle);
     }
 };

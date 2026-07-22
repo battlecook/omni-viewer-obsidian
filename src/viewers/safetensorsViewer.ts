@@ -5,7 +5,6 @@ import {
     mountSafetensorsViewer,
     type SafetensorsViewerContext
 } from 'omni-viewer-core/viewers/safetensors';
-import { applyMobileCoreStyles } from '../utils/mobileUi';
 import { ViewerDefinition } from '../viewerCore';
 
 function coreHostContext(): SafetensorsViewerContext {
@@ -57,7 +56,6 @@ export const safetensorsViewer: ViewerDefinition = {
             container,
             coreHostContext()
         );
-        applyMobileCoreStyles(container);
         ctx.host.setCoreViewerHandle(handle);
     }
 };

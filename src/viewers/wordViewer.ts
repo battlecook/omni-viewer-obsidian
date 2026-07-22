@@ -18,7 +18,6 @@ import {
     type WordViewerContext,
     type WordViewerDeps
 } from 'omni-viewer-core/viewers/word';
-import { applyMobileCoreStyles } from '../utils/mobileUi';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 
 // Passed explicitly rather than via the core's `loadWordViewerDeps()`: that
@@ -51,11 +50,10 @@ function createPrintService(container: HTMLElement): PrintService {
             const content = root.querySelector<HTMLElement>('.omni-word__content');
             if (!content) return;
 
-            const iframe = document.createElement('iframe');
-            iframe.setAttribute('aria-hidden', 'true');
-            iframe.style.cssText =
-                'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-            document.body.append(iframe);
+            const iframe = document.body.createEl('iframe', {
+                cls: 'omni-word-print-frame',
+                attr: { 'aria-hidden': 'true' }
+            });
             // Printing is modal on Electron so print() has returned by the time
             // we schedule this, but defer removal anyway so the frame outlives
             // any asynchronous spooling.
@@ -68,6 +66,8 @@ function createPrintService(container: HTMLElement): PrintService {
                 return;
             }
             try {
+                // This stylesheet belongs to the isolated print document,
+                // which cannot inherit the plugin's styles.css rules.
                 const style = doc.createElement('style');
                 // The iframe is a bare document with no --omni-* tokens, so the
                 // core CSS would use its dark hardcoded fallbacks. Pin a light,
@@ -76,21 +76,18 @@ function createPrintService(container: HTMLElement): PrintService {
                 style.textContent =
                     ':root{--omni-bg:#fff;--omni-fg:#000;--omni-panel-bg:#fff;--omni-border:#ccc;--omni-control-bg:#fff}' +
                     'html,body{background:#fff;margin:0}' +
+                    '.omni-word__content--print{transform:none!important}' +
                     wordViewerCss;
                 doc.head.append(style);
 
                 // Rebuild the frame/viewport ancestry so the core's `@media
                 // print` rules (which target .omni-word__viewport) still apply.
-                const frame = doc.createElement('section');
-                frame.className = 'omni-word';
-                const viewport = doc.createElement('main');
-                viewport.className = 'omni-word__viewport';
+                const frame = doc.body.createEl('section', { cls: 'omni-word' });
+                const viewport = frame.createEl('main', { cls: 'omni-word__viewport' });
                 const clone = doc.importNode(content, true);
                 // Screen zoom must not scale the printed output.
-                clone.style.transform = 'none';
+                clone.addClass('omni-word__content--print');
                 viewport.append(clone);
-                frame.append(viewport);
-                doc.body.append(frame);
 
                 await waitForImages(doc);
                 frameWindow.focus();
@@ -156,7 +153,6 @@ async function renderWord(ctx: RenderContext): Promise<void> {
         coreHostContext(container),
         wordDeps
     );
-    applyMobileCoreStyles(container);
     ctx.host.setCoreViewerHandle(handle);
 }
 

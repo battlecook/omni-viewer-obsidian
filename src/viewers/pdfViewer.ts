@@ -12,7 +12,6 @@ import { showOpenDialog, showSaveDialog } from '../platform';
 import { ViewerDefinition } from '../viewerCore';
 import { createPdfjsAssetService, loadBundledPdfjs } from './pdfjsRuntime';
 import { pickVaultFile, saveBinaryBesideFile } from '../utils/vaultFiles';
-import { applyMobileCoreStyles } from '../utils/mobileUi';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
@@ -126,7 +125,6 @@ export const pdfViewer: ViewerDefinition = {
                     loadPdfLib: async () => pdfLib
                 }
             );
-            applyMobileCoreStyles(container);
             const managedHandle: PdfViewerHandle = {
                 controller: handle.controller,
                 get operation() {

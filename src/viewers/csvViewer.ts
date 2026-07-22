@@ -14,7 +14,6 @@ import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import { Platform } from 'obsidian';
 import { showSaveDialog } from '../platform';
 import { saveBinaryBesideFile } from '../utils/vaultFiles';
-import { applyMobileCoreStyles } from '../utils/mobileUi';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
@@ -95,7 +94,6 @@ export const csvViewer: ViewerDefinition = {
             container,
             coreHostContext(ctx)
         );
-        applyMobileCoreStyles(container);
         ctx.host.setCoreViewerHandle(handle);
     }
 };

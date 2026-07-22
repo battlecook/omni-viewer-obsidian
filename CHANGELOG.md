@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.1] - 2026-07-22
+
+### Changed
+- Updated `omni-viewer-core` to 0.7.0.
+- Moved mobile viewer overrides into the plugin's `styles.css` instead of injecting a runtime `<style>` element.
+
+### Fixed
+- Replaced direct Word print-view style assignments with CSS classes to comply with Obsidian's plugin review rules.
+
 ## [0.3.0] - 2026-07-22
 
 ### Added

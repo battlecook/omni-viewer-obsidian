@@ -10,8 +10,52 @@
 
 .is-mobile .omni-viewer-content button,
 .is-mobile .omni-viewer-content input,
-.is-mobile .omni-viewer-content select {
+.is-mobile .omni-viewer-content select,
+.is-mobile .omni-viewer-content [role="button"] {
+    min-height: 40px;
     font-size: max(16px, var(--font-ui-small));
+}
+
+.is-mobile .omni-viewer-content .omni-csv__toolbar,
+.is-mobile .omni-viewer-content .omni-pdf__toolbar,
+.is-mobile .omni-viewer-content .omni-ppt__toolbar,
+.is-mobile .omni-viewer-content .omni-safetensors__toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.is-mobile .omni-viewer-content .omni-csv__toolbar > *,
+.is-mobile .omni-viewer-content .omni-pdf__toolbar > * {
+    max-width: 100%;
+}
+
+.is-mobile .omni-viewer-content .omni-csv__table-wrap,
+.is-mobile .omni-viewer-content .omni-pdf__workspace,
+.is-mobile .omni-viewer-content .omni-ppt__viewport,
+.is-mobile .omni-viewer-content .omni-safetensors__table-wrap {
+    overscroll-behavior: contain;
+}
+
+.is-mobile .omni-viewer-content .omni-ppt__viewport {
+    padding: 10px;
+}
+
+.is-mobile .omni-viewer-content .omni-ppt__toolbar {
+    overflow-x: auto;
+}
+
+.is-mobile .omni-viewer-content .omni-archive__entry {
+    min-height: 44px;
+}
+
+.omni-word-print-frame {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+    visibility: hidden;
 }
 
 .omni-viewer-content .omni-viewer-frame {
