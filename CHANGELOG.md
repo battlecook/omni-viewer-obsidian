@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.2] - 2026-07-23
+
+### Fixed
+- Bundled JSZip from its source entry so the existing safe Promise and `setImmediate` shims replace legacy browser fallbacks that dynamically created `<script>` elements and failed Obsidian's release security scan.
+
 ## [0.3.1] - 2026-07-22
 
 ### Changed

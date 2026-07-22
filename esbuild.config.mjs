@@ -13,6 +13,7 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = process.argv[2] === "production";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const jsZipSourceEntryPath = path.join(dirname, "node_modules/jszip/lib/index.js");
 const setImmediateShimPath = path.join(dirname, "src/shims/setimmediate.ts");
 const nativePromiseShimPath = path.join(dirname, "src/shims/nativePromise.cjs");
 const globalsShimPath = path.join(dirname, "src/shims/globals.ts");
@@ -70,8 +71,15 @@ const context = await esbuild.context({
 			}
 		},
 		{
-			name: "safe-setimmediate-shim",
+			name: "safe-jszip-runtime",
 			setup(build) {
+				// JSZip's browser field redirects its source entry to a pre-bundled
+				// Browserify artifact. That artifact contains legacy IE fallbacks
+				// which dynamically create <script> elements, and its internal
+				// dependencies can no longer be replaced by the shims below.
+				build.onResolve({ filter: /^jszip$/ }, () => ({
+					path: jsZipSourceEntryPath,
+				}));
 				build.onResolve({ filter: /^setimmediate$/ }, () => ({
 					path: setImmediateShimPath,
 				}));
