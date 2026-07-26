@@ -8,13 +8,14 @@ import { buildYamlViewerModel } from './utils/yamlNodeBuilder';
 import { DbcParser } from './utils/dbcParser';
 import { parseProto } from './utils/protoParser';
 import { TemplateUtils } from './utils/templateUtils';
-import { TomlParser } from './utils/tomlParser';
 import { ViewerDefinition } from './viewerCore';
 import { csvViewer } from './viewers/csvViewer';
 import { jsonViewer } from './viewers/jsonViewer';
 import { pdfViewer } from './viewers/pdfViewer';
 import { pptViewer } from './viewers/pptViewer';
 import { safetensorsViewer } from './viewers/safetensorsViewer';
+import { tomlViewer } from './viewers/tomlViewer';
+import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
 import { saveBinaryBesideFile } from './utils/vaultFiles';
 import { confirmDialog } from './platform';
@@ -106,16 +107,6 @@ const yamlViewer = simpleTextViewer({
     })
 });
 
-const tomlViewer = simpleTextViewer({
-    viewType: 'omni-viewer.tomlViewer', displayName: 'TOML Viewer', extensions: ['toml'], icon: 'file-cog',
-    template: 'toml/tomlViewer.html',
-    variables: (source, ctx) => ({
-        fileName: ctx.fileName,
-        tomlSource: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(source)),
-        tomlModel: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(TomlParser.parse(source)))
-    })
-});
-
 const dbcViewer = simpleTextViewer({
     viewType: 'omni-viewer.dbcViewer', displayName: 'DBC Viewer', extensions: ['dbc'], icon: 'network',
     template: 'dbc/dbcViewer.html',
@@ -142,24 +133,8 @@ const markdownViewer = simpleTextViewer({
     variables: (source, ctx) => ({ fileName: ctx.fileName, fileSize: formatBytes(ctx.file.stat.size), markdownSource: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(source)) })
 });
 
-const mermaidViewer = simpleTextViewer({
-    viewType: 'omni-viewer.mermaidViewer', displayName: 'Mermaid Viewer', extensions: ['mmd', 'mermaid'], icon: 'git-fork',
-    template: 'mermaid/mermaidViewer.html', editable: true,
-    variables: (source, ctx) => ({ fileName: ctx.fileName, fileSize: formatBytes(ctx.file.stat.size), mermaidSource: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(source)) })
-});
-
-const plantumlViewer = simpleTextViewer({
-    viewType: 'omni-viewer.plantumlViewer', displayName: 'PlantUML Viewer', extensions: ['puml', 'plantuml', 'iuml'], icon: 'workflow',
-    template: 'plantuml/plantumlViewer.html', editable: true,
-    variables: (source, ctx) => ({
-        fileName: ctx.fileName,
-        fileNameJson: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(ctx.fileName)),
-        fileSize: formatBytes(ctx.file.stat.size),
-        fileSizeJson: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(formatBytes(ctx.file.stat.size))),
-        plantumlSource: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(source)),
-        plantumlTemplateBase: 'about:blank'
-    })
-});
+// Mermaid/PlantUML share the same core-mount adapters as desktop (the core DOM
+// viewer works on mobile, like the TOML/JSON viewers).
 
 const jsonlViewer: ViewerDefinition = {
     viewType: 'omni-viewer.jsonlViewer', displayName: 'JSONL Viewer', extensions: ['jsonl', 'ndjson', 'jsonlines'], icon: 'list',

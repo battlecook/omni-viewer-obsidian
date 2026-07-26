@@ -16,6 +16,17 @@ import { Platform } from 'obsidian';
 import type { FileSaveService, HostContext } from 'omni-viewer-core/host';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import { mountPptViewer, type PptViewerHandle } from 'omni-viewer-core/viewers/ppt';
+import { convertEmfToDataUrl, convertWmfToDataUrl } from 'emf-converter';
+
+// Rasterize an embedded EMF/WMF metafile to a PNG data URL. Imported directly
+// (not via core's ppt/self-loading, which also pulls in a pdfjs-dist import this
+// plugin resolves through its own bundled runtime). Returns undefined on failure
+// so the core falls back to its diagnosed placeholder.
+async function renderPptMetafile(input: Uint8Array, type: 'wmf' | 'emf'): Promise<string | undefined> {
+    const buffer = input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer;
+    const url = type === 'wmf' ? await convertWmfToDataUrl(buffer) : await convertEmfToDataUrl(buffer);
+    return url ?? undefined;
+}
 import { showSaveDialog } from '../platform';
 import { FileUtils } from '../utils/fileUtils';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
@@ -84,9 +95,10 @@ export const pptViewer: ViewerDefinition = {
             const buffer = await ctx.app.vault.readBinary(ctx.file);
             const container = ctx.host.provideDomContainer();
             const deps = Platform.isMobileApp
-                ? { loadPdfjs: loadBundledPdfjs }
+                ? { loadPdfjs: loadBundledPdfjs, renderMetafile: renderPptMetafile }
                 : {
                     loadPdfjs: loadBundledPdfjs,
+                    renderMetafile: renderPptMetafile,
                     // soffice reads from disk, so convert the file in place and
                     // ignore the bytes the core hands us (same content).
                     convertToPdf: async () => {

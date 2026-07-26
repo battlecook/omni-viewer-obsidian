@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0] - 2026-07-26
+
+### Changed
+- Migrated the Parquet, TOML, Mermaid, and PlantUML viewers to the shared `omni-viewer-core` rendering engine, mounting the core viewer directly into the view instead of the template path (continuing the CSV/PDF/PowerPoint/archive migrations).
+- Parquet: large files again load lazily — the viewer now reads through random-access range reads on desktop, materializing only the footer and the requested row-group pages instead of loading the whole file into memory, so files above 50 MB no longer preload every row. Small files behave as before, and the core viewer adds table/JSON export to a file through the system save dialog.
+- TOML: the core viewer replaces the read-only tree with an editable source panel that writes changes back to the file, alongside tree/flatten/JSON panels, scoped search, expand/collapse, and copy path/value/JSON — on both desktop and mobile.
+- Mermaid and PlantUML: the core viewer adds a live source editor with write-back to the file, theme-aware rendering, zoom, and copy/save of the diagram. The mermaid and PlantUML renderers are bundled explicitly (added as direct `mermaid` and `puml-canvas-js` dependencies) so esbuild can follow them into the single-file plugin bundle.
+- PowerPoint: embedded EMF/WMF metafile images are now rasterized to PNG and rendered inline (desktop and mobile) instead of falling back to a placeholder.
+- Updated `omni-viewer-core` to 0.9.0.
+
+### Removed
+- Deleted the viewer code the core migrations replaced: the Parquet, TOML, Mermaid, and PlantUML templates, the standalone TOML parser, the filesystem Parquet reader, and the `hyparquet-node` type shim.
+
+### Build
+- Attest `main.js` and `styles.css` in the release workflow to publish build provenance.
+
 ## [0.3.2] - 2026-07-23
 
 ### Fixed

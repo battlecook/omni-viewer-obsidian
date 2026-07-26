@@ -83,6 +83,16 @@
     --omni-toolbar-bg: var(--background-secondary);
     --omni-header-bg: var(--background-secondary);
     --omni-hover: var(--background-modifier-hover);
+    /* Parquet viewer: context-menu background + focus ring. Unmapped these fall
+       back to the core's hardcoded #fff / #2684ff, so the menu turns white in
+       dark themes. */
+    --omni-menu-bg: var(--background-secondary);
+    --omni-focus: var(--interactive-accent);
+    /* structured viewers (toml) use these for tree hover/selection + parse
+       errors; unmapped they keep the core's hardcoded dark fallbacks. */
+    --omni-hover-bg: var(--background-modifier-hover);
+    --omni-selection-bg: var(--text-selection);
+    --omni-error: var(--text-error);
     /* The office-family viewers (ppt/word/hwp) name the same token differently;
        without this their toolbars keep the core's dark hardcoded fallback. */
     --omni-control-bg: var(--interactive-normal);
@@ -101,4 +111,13 @@
     --omni-mono-font: var(--font-monospace);
     --omni-badge-bg: var(--background-modifier-border);
     --omni-code-bg: var(--background-primary-alt);
+    /* Diagram viewers (mermaid/plantuml): toolbar buttons, status/caption
+       colors, source editor + mono font. Unmapped these fall back to the
+       core's hardcoded dark values and ignore the Obsidian theme. */
+    --omni-font-family: var(--font-interface);
+    --omni-mono: var(--font-monospace);
+    --omni-success: var(--text-success);
+    --omni-warning: var(--text-warning);
+    --omni-button-secondary-bg: var(--interactive-normal);
+    --omni-editor-bg: var(--background-primary);
 }

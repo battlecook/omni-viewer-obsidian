@@ -15,10 +15,7 @@ import {
     getDelimitedFileDelimiter as detectDelimitedFileDelimiter,
     readExcelFile as readWorkbookFile,
     readJsonlFile as readJsonlLines,
-    readJsonlFilePreview as readJsonlPreview,
-    readParquetFile as readParquetRows,
-    ParquetFileData,
-    ParquetReadOptions
+    readJsonlFilePreview as readJsonlPreview
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 
@@ -1000,10 +997,6 @@ export class FileUtils {
         hasMoreContent: boolean;
     }> {
         return readJsonlPreview(filePath, previewBytes);
-    }
-
-    public static async readParquetFile(filePath: string, options: ParquetReadOptions = {}): Promise<ParquetFileData> {
-        return readParquetRows(filePath, options);
     }
 
     public static async readShapefile(filePath: string, options: ShapefileReadOptions = {}): Promise<ShapefileData> {
