@@ -33,6 +33,7 @@ import { pptViewer } from './viewers/pptViewer';
 import { excelViewer, hwpViewer, psdViewer } from './viewers/officeViewers';
 import { wordViewer } from './viewers/wordViewer';
 import { safetensorsViewer } from './viewers/safetensorsViewer';
+import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     archiveViewer,
@@ -58,6 +59,7 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     jsonlViewer,
     tomlViewer,
     markdownViewer,
+    latexViewer,
     mermaidViewer,
     plantumlViewer,
     protoViewer,

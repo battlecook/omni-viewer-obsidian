@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0] - 2026-08-02
+
+### Added
+- Added a LaTeX viewer for `.tex`, `.latex`, and `.ltx` on desktop and mobile, backed by `omni-viewer-core`: document outline, preview/split/source modes, editing and writeback, KaTeX math, tables/theorems, references, and vault-contained `\\input`/`\\include` resolution. The preview explicitly preserves unsupported constructs as source because it is not a full TeX compiler.
+- Bundled KaTeX CSS and woff2 fonts into the single-file plugin release and sanitised its generated math markup with DOMPurify.
+
+### Changed
+- Updated `omni-viewer-core` from 0.9.0 to 0.12.0 while pinning `hyparquet` 1.26.2 to keep the dependency upgrade isolated.
+- Parquet now inherits the core's 1 MiB clipboard guard, sort indicator, copy toast, and footer-metadata reuse for lazy loading.
+
+### Fixed
+- Preserved unsaved LaTeX edits across Obsidian refresh/writeback events through the core's official `isDirty()` handle contract, including edits made while a save is in flight.
+- Restored LaTeX `table` and `figure` float bodies (including nested `tabular` content) via the core 0.11.1 regression fix.
+- Removed the duplicate Obsidian success notice after Parquet copy; core 0.11 now owns the confirmation toast.
+
 ## [0.4.0] - 2026-07-26
 
 ### Changed

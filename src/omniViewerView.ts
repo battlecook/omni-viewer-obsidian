@@ -118,7 +118,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
                     new Notice('Omni Viewer: no file selected to share.');
                     return;
                 }
-                if (this.coreViewerHandle?.isDirty?.()) {
+                if (this.hasUnsavedChanges()) {
                     new Notice('Omni Viewer: save your changes before sharing.');
                     return;
                 }
@@ -174,11 +174,15 @@ export class OmniViewerView extends FileView implements ViewerHost {
         }
     }
 
+    public hasUnsavedChanges(): boolean {
+        return this.coreViewerHandle?.isDirty?.() ?? false;
+    }
+
     private async renderFile(file: TFile): Promise<void> {
         // A re-render (e.g. triggered by our own save touching the vault)
         // would rebuild the viewer and discard unsaved edits — hold off while
         // the core viewer reports dirty state.
-        if (this.coreViewerHandle?.isDirty?.()) {
+        if (this.hasUnsavedChanges()) {
             return;
         }
         // Skip the single reload echo that Obsidian fires after our own
@@ -249,7 +253,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
         return container;
     }
 
-    public setCoreViewerHandle(handle: { dispose(): void }): void {
+    public setCoreViewerHandle(handle: { dispose(): void; isDirty?(): boolean }): void {
         this.disposeCoreViewer();
         this.coreViewerHandle = handle;
     }

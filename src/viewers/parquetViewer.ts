@@ -21,23 +21,21 @@ import { RenderContext, ViewerDefinition } from '../viewerCore';
 
 /**
  * Writes text to the clipboard with a legacy `execCommand` fallback for
- * webviews where `navigator.clipboard` is unavailable, and surfaces a toast on
- * success/failure. Always resolves so the core's fire-and-forget copy calls
- * never raise an unhandled rejection.
+ * webviews where `navigator.clipboard` is unavailable. Core 0.11 owns success
+ * and payload-limit toasts; this adapter only surfaces a fallback failure.
+ * Always resolves so the core's fire-and-forget copy calls never raise an
+ * unhandled rejection.
  */
 async function copyToClipboard(text: string): Promise<void> {
-    const notifyOk = () => new Notice(resolveCatalogMessage('parquet.copied'));
     try {
         if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(text);
-            notifyOk();
             return;
         }
     } catch {
         // fall through to the execCommand path below
     }
     if (fallbackCopyText(text)) {
-        notifyOk();
         return;
     }
     new Notice('Failed to copy to clipboard');

@@ -43,6 +43,7 @@ export type OmniViewerViewType =
     | 'omni-viewer.jsonlViewer'
     | 'omni-viewer.tomlViewer'
     | 'omni-viewer.markdownViewer'
+    | 'omni-viewer.latexViewer'
     | 'omni-viewer.mermaidViewer'
     | 'omni-viewer.plantumlViewer'
     | 'omni-viewer.protoViewer'
@@ -713,6 +714,17 @@ export class FileUtils {
             return {
                 viewType: 'omni-viewer.markdownViewer',
                 reason: 'Used the Markdown extension fallback.',
+                matchedBySignature: false
+            };
+        }
+
+        // LaTeX uses many tokens that can resemble generic key/value or
+        // delimited text. Preserve its explicit extension before heuristic
+        // JSONL/TOML/CSV detection is allowed to reroute the file.
+        if (ext === '.tex' || ext === '.latex' || ext === '.ltx') {
+            return {
+                viewType: 'omni-viewer.latexViewer',
+                reason: 'Used the LaTeX extension fallback.',
                 matchedBySignature: false
             };
         }

@@ -11,8 +11,9 @@ const binaryFiles = [
   "wasm/audio_engine.wasm",
   "templates/hwp/vendor/rhwp/rhwp_bg.wasm",
 ];
+const binaryRoots = ["node_modules/katex/dist/fonts"];
 
-const extraTextFiles = [];
+const extraTextFiles = ["node_modules/katex/dist/katex.min.css"];
 
 function normalizeKey(filePath) {
   return filePath.split(path.sep).join("/");
@@ -58,7 +59,16 @@ function textAssetEntries() {
 }
 
 function binaryAssetEntries() {
-  return binaryFiles
+  const files = [...binaryFiles];
+  for (const root of binaryRoots) {
+    files.push(
+      ...walkFiles(path.join(rootDir, root))
+        .filter((file) => file.endsWith(".woff2"))
+        .map((file) => normalizeKey(path.relative(rootDir, file)))
+    );
+  }
+
+  return [...new Set(files)]
     .filter((rel) => fs.existsSync(path.join(rootDir, rel)))
     .map((rel) => {
       const gzipped = zlib.gzipSync(fs.readFileSync(path.join(rootDir, rel)));

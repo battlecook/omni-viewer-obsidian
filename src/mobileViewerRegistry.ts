@@ -17,6 +17,7 @@ import { safetensorsViewer } from './viewers/safetensorsViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
+import { latexViewer } from './viewers/latexViewer';
 import { saveBinaryBesideFile } from './utils/vaultFiles';
 import { confirmDialog } from './platform';
 
@@ -317,6 +318,7 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     tomlViewer,
     dbcViewer,
     markdownViewer,
+    latexViewer,
     mermaidViewer,
     plantumlViewer,
     protoViewer,

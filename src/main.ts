@@ -1,4 +1,4 @@
-import { FileSystemAdapter, Menu, Platform, Plugin, TFile } from 'obsidian';
+import { FileSystemAdapter, Menu, Notice, Platform, Plugin, TFile } from 'obsidian';
 import * as path from 'path';
 import { OmniViewerView, createViewFactory } from './omniViewerView';
 import { VIEWER_DEFINITIONS } from './viewerRegistry';
@@ -66,6 +66,11 @@ export default class OmniViewerPlugin extends Plugin {
                     return false;
                 }
                 if (!checking) {
+                    const view = this.app.workspace.getActiveViewOfType(OmniViewerView);
+                    if (view?.hasUnsavedChanges()) {
+                        new Notice('Omni Viewer: save your changes before sharing.');
+                        return true;
+                    }
                     void shareFileCommand(this.app, file);
                 }
                 return true;

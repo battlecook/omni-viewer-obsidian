@@ -26,4 +26,5 @@ files where noted.
 ## npm dependencies
 
 Runtime npm dependencies (bundled into `main.js`) are listed in `package.json`
-and retain their respective licenses (all MIT/Apache-2.0/BSD-compatible).
+and retain their respective licenses. The LaTeX viewer additionally embeds
+KaTeX JavaScript/CSS/fonts (MIT) and DOMPurify (MPL-2.0 OR Apache-2.0).
