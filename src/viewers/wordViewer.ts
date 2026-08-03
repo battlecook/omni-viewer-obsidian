@@ -14,7 +14,6 @@ import type { PrintService } from 'omni-viewer-core/host';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
 import {
     mountWordViewer,
-    wordViewerCss,
     type WordViewerContext,
     type WordViewerDeps
 } from 'omni-viewer-core/viewers/word';
@@ -38,68 +37,40 @@ const wordDeps: WordViewerDeps = {
  * VSCode adapters (whose viewer owns the whole page), the viewer is embedded
  * in the Obsidian window, so printing would capture the entire app UI.
  *
- * Instead, clone the rendered document into an offscreen iframe and print
- * that. The clone carries the <style> elements docx-preview injects into the
- * content element, so page geometry survives; the core stylesheet supplies the
- * rest.
+ * Move the mounted viewer into a temporary, top-level print root. Word viewer
+ * CSS is bundled into styles.css, so the print document needs no runtime style
+ * element (which Obsidian's plugin-review rules prohibit).
  */
 function createPrintService(container: HTMLElement): PrintService {
     return {
         print: async () => {
-            const root: ParentNode = container.shadowRoot ?? container;
-            const content = root.querySelector<HTMLElement>('.omni-word__content');
-            if (!content) return;
+            const parent = container.parentNode;
+            if (!parent) return;
 
-            const iframe = document.body.createEl('iframe', {
-                cls: 'omni-word-print-frame',
-                attr: { 'aria-hidden': 'true' }
+            const nextSibling = container.nextSibling;
+            const printRoot = document.body.createDiv({
+                cls: ['omni-viewer-content', 'omni-word-print-root']
             });
-            // Printing is modal on Electron so print() has returned by the time
-            // we schedule this, but defer removal anyway so the frame outlives
-            // any asynchronous spooling.
-            const removeLater = () => window.setTimeout(() => iframe.remove(), 1000);
-
-            const doc = iframe.contentDocument;
-            const frameWindow = iframe.contentWindow;
-            if (!doc || !frameWindow) {
-                iframe.remove();
-                return;
-            }
+            document.body.addClass('omni-word-printing');
+            printRoot.append(container);
             try {
-                // This stylesheet belongs to the isolated print document,
-                // which cannot inherit the plugin's styles.css rules.
-                const style = doc.head.createEl('style');
-                // The iframe is a bare document with no --omni-* tokens, so the
-                // core CSS would use its dark hardcoded fallbacks. Pin a light,
-                // paper-like surface: the document should print on white
-                // regardless of the Obsidian theme.
-                style.textContent =
-                    ':root{--omni-bg:#fff;--omni-fg:#000;--omni-panel-bg:#fff;--omni-border:#ccc;--omni-control-bg:#fff}' +
-                    'html,body{background:#fff;margin:0}' +
-                    '.omni-word__content--print{transform:none!important}' +
-                    wordViewerCss;
-                // Rebuild the frame/viewport ancestry so the core's `@media
-                // print` rules (which target .omni-word__viewport) still apply.
-                const frame = doc.body.createEl('section', { cls: 'omni-word' });
-                const viewport = frame.createEl('main', { cls: 'omni-word__viewport' });
-                const clone = doc.importNode(content, true);
-                // Screen zoom must not scale the printed output.
-                clone.addClass('omni-word__content--print');
-                viewport.append(clone);
-
-                await waitForImages(doc);
-                frameWindow.focus();
-                frameWindow.print();
+                await waitForImages(container);
+                window.print();
             } finally {
-                removeLater();
+                document.body.removeClass('omni-word-printing');
+                const insertionPoint = nextSibling?.parentNode === parent ? nextSibling : null;
+                parent.insertBefore(container, insertionPoint);
+                printRoot.remove();
             }
         }
     };
 }
 
 /** Best-effort: let embedded images decode so they are not dropped from the print. */
-async function waitForImages(doc: Document): Promise<void> {
-    const images = Array.from(doc.images).filter((image) => !image.complete);
+async function waitForImages(root: ParentNode): Promise<void> {
+    const images = Array.from(root.querySelectorAll<HTMLImageElement>('img')).filter(
+        (image) => !image.complete
+    );
     if (!images.length) return;
     await Promise.race([
         Promise.all(
@@ -148,7 +119,8 @@ async function renderWord(ctx: RenderContext): Promise<void> {
         { fileName: ctx.fileName, data: new Uint8Array(buffer) },
         container,
         coreHostContext(container),
-        wordDeps
+        wordDeps,
+        { styleIsolation: 'scoped' }
     );
     ctx.host.setCoreViewerHandle(handle);
 }

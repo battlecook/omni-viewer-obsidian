@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.2] - 2026-08-03
+
+### Changed
+- Moved the Word viewer's core styling into the release `styles.css` and mounted the viewer in scoped light DOM so Obsidian can load its CSS through the supported plugin stylesheet path.
+- Reworked Word printing to use a temporary top-level print root and static `@media print` rules while preserving document images, page layout, and zoom reset behavior.
+
+### Fixed
+- Resolved the remaining Obsidian Community plugin review error caused by creating and attaching a runtime `<style>` element for the Word print view.
+
+### Build
+- Extended the deterministic stylesheet build step to scope and bundle `omni-viewer-core` Word CSS without leaking its standalone page selectors into Obsidian.
+
 ## [0.5.1] - 2026-08-03
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, LaTeX, PSD, data, diagram, and automotive files.",
   "main": "main.js",
   "repository": {

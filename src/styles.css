@@ -58,14 +58,29 @@
     min-height: 44px;
 }
 
-.omni-word-print-frame {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    width: 0;
-    height: 0;
-    border: 0;
-    visibility: hidden;
+.omni-word-print-root {
+    display: none;
+}
+
+@media print {
+    body.omni-word-printing > :not(.omni-word-print-root) {
+        display: none !important;
+    }
+
+    body.omni-word-printing .omni-word-print-root {
+        --omni-bg: #fff;
+        --omni-fg: #000;
+        --omni-panel-bg: #fff;
+        --omni-border: #ccc;
+        --omni-control-bg: #fff;
+        display: block;
+        background: #fff;
+        color: #000;
+    }
+
+    body.omni-word-printing .omni-word__content {
+        transform: none !important;
+    }
 }
 
 .omni-viewer-content .omni-viewer-frame {
