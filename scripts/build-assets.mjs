@@ -11,9 +11,6 @@ const binaryFiles = [
   "wasm/audio_engine.wasm",
   "templates/hwp/vendor/rhwp/rhwp_bg.wasm",
 ];
-const binaryRoots = ["node_modules/katex/dist/fonts"];
-
-const extraTextFiles = ["node_modules/katex/dist/katex.min.css"];
 
 function normalizeKey(filePath) {
   return filePath.split(path.sep).join("/");
@@ -41,13 +38,6 @@ function textAssetEntries() {
   for (const root of textRoots) {
     files.push(...walkFiles(path.join(rootDir, root)));
   }
-  for (const rel of extraTextFiles) {
-    const abs = path.join(rootDir, rel);
-    if (fs.existsSync(abs)) {
-      files.push(abs);
-    }
-  }
-
   return files
     .filter((file) => !binaryFiles.includes(normalizeKey(path.relative(rootDir, file))))
     .sort()
@@ -60,14 +50,6 @@ function textAssetEntries() {
 
 function binaryAssetEntries() {
   const files = [...binaryFiles];
-  for (const root of binaryRoots) {
-    files.push(
-      ...walkFiles(path.join(rootDir, root))
-        .filter((file) => file.endsWith(".woff2"))
-        .map((file) => normalizeKey(path.relative(rootDir, file)))
-    );
-  }
-
   return [...new Set(files)]
     .filter((rel) => fs.existsSync(path.join(rootDir, rel)))
     .map((rel) => {

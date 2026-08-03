@@ -1,10 +1,12 @@
 // path-browserify has no bundled TypeScript declaration.
 // @ts-ignore
 import browserPath from 'path-browserify';
+import { Platform } from 'obsidian';
 
 type NativePath = typeof import('path');
 
 function nativePath(): NativePath | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         return req ? req('path') as NativePath : null;

@@ -9,8 +9,8 @@
 // footer + requested row-group pages are ever read into memory. On mobile
 // (no filesystem access) we fall back to the whole-buffer `{ data }` path.
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { mountParquetViewer } from 'omni-viewer-core/viewers/parquet';
 import type { ParquetViewerContext, ParquetViewerSource } from 'omni-viewer-core/viewers/parquet';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
@@ -43,14 +43,13 @@ async function copyToClipboard(text: string): Promise<void> {
 
 function fallbackCopyText(text: string): boolean {
     if (typeof document === 'undefined') return false;
-    const textArea = document.createElement('textarea');
+    const textArea = document.body.createEl('textarea');
     textArea.value = text;
     textArea.setAttribute('readonly', '');
     textArea.setCssStyles({
         position: 'fixed',
         left: '-9999px'
     });
-    document.body.appendChild(textArea);
     textArea.select();
     try {
         return document.execCommand('copy');
@@ -75,7 +74,6 @@ function coreHostContext(renderCtx: RenderContext): ParquetViewerContext {
                 const prefix = '[omni-viewer parquet]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };
@@ -128,7 +126,7 @@ async function createFsParquetSource(ctx: RenderContext): Promise<ParquetViewerS
                 const length = Math.max(0, end - start);
                 const bytes = Buffer.alloc(length);
                 const { bytesRead } = await handle.read(bytes, 0, length, start);
-                return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytesRead) as ArrayBuffer;
+                return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytesRead);
             } finally {
                 await handle.close();
             }

@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from '../shims/desktopFs';
 import { DbcParser } from '../utils/dbcParser';
 import { TemplateUtils } from '../utils/templateUtils';
 import { ViewerDefinition } from '../viewerCore';

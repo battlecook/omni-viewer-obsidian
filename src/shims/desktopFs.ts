@@ -5,9 +5,12 @@
  * if a desktop-only viewer accidentally reaches them on mobile.
  */
 
+import { Platform } from 'obsidian';
+
 type NativeFs = typeof import('fs');
 
 function nativeFs(): NativeFs | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         return req ? req('fs') as NativeFs : null;
@@ -27,19 +30,19 @@ export const promises = fs?.promises ?? new Proxy({}, {
 }) as NativeFs['promises'];
 export const constants = fs?.constants ?? { X_OK: 1 } as NativeFs['constants'];
 export const createReadStream: NativeFs['createReadStream'] = ((...args: Parameters<NativeFs['createReadStream']>) =>
-    fs ? fs.createReadStream(...args) : unavailable()) as NativeFs['createReadStream'];
+    fs ? fs.createReadStream(...args) : unavailable());
 export const createWriteStream: NativeFs['createWriteStream'] = ((...args: Parameters<NativeFs['createWriteStream']>) =>
-    fs ? fs.createWriteStream(...args) : unavailable()) as NativeFs['createWriteStream'];
+    fs ? fs.createWriteStream(...args) : unavailable());
 export const openSync: NativeFs['openSync'] = ((...args: Parameters<NativeFs['openSync']>) =>
-    fs ? fs.openSync(...args) : unavailable()) as NativeFs['openSync'];
+    fs ? fs.openSync(...args) : unavailable());
 export const closeSync: NativeFs['closeSync'] = ((...args: Parameters<NativeFs['closeSync']>) =>
-    fs ? fs.closeSync(...args) : unavailable()) as NativeFs['closeSync'];
+    fs ? fs.closeSync(...args) : unavailable());
 export const fstatSync: NativeFs['fstatSync'] = ((...args: Parameters<NativeFs['fstatSync']>) =>
     fs ? fs.fstatSync(...args) : unavailable()) as NativeFs['fstatSync'];
 export const readSync: NativeFs['readSync'] = ((...args: Parameters<NativeFs['readSync']>) =>
     fs ? fs.readSync(...args) : unavailable()) as NativeFs['readSync'];
 export const existsSync: NativeFs['existsSync'] = ((...args: Parameters<NativeFs['existsSync']>) =>
-    fs ? fs.existsSync(...args) : false) as NativeFs['existsSync'];
+    fs ? fs.existsSync(...args) : false);
 export const readFileSync: NativeFs['readFileSync'] = ((...args: Parameters<NativeFs['readFileSync']>) =>
     fs ? (fs.readFileSync as (...values: unknown[]) => unknown)(...args) : unavailable()) as NativeFs['readFileSync'];
 

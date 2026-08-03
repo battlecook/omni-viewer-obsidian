@@ -1,7 +1,7 @@
-import * as fs from 'fs';
+import * as fs from '../../shims/desktopFs';
 import * as mm from 'music-metadata';
-import * as path from 'path';
-import { spawn } from 'child_process';
+import * as path from '../../shims/desktopPath';
+import { spawn } from '../../shims/desktopChildProcess';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const WEBVIEW_TRANSCODE_EXTENSIONS = new Set(['.aiff', '.aif', '.aifc', '.ac3', '.amr', '.awb']);

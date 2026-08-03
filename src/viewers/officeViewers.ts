@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { FileUtils } from '../utils/fileUtils';
 import { TemplateUtils } from '../utils/templateUtils';
 import { ViewerDefinition } from '../viewerCore';

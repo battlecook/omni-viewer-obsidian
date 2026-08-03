@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from '../shims/desktopFs';
 import type { AutomotiveTable, AutomotiveViewerModel } from './automotiveParsers';
 import { Hdf5Parser } from './hdf5Parser';
 

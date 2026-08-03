@@ -1,5 +1,5 @@
 import { FileSystemAdapter, Menu, Notice, Platform, Plugin, TFile } from 'obsidian';
-import * as path from 'path';
+import * as path from './shims/desktopPath';
 import { OmniViewerView, createViewFactory } from './omniViewerView';
 import { VIEWER_DEFINITIONS } from './viewerRegistry';
 import { MOBILE_VIEWER_DEFINITIONS } from './mobileViewerRegistry';

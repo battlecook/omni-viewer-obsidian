@@ -1,5 +1,5 @@
 import { FileSystemAdapter, FileView, Notice, Platform, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
-import * as path from 'path';
+import * as path from './shims/desktopPath';
 import { MessageHandler } from './utils/messageHandler';
 import { WebviewMessage } from './utils/messageHandlers/types';
 import { MessageContext } from './utils/messageHandlers/context';
@@ -288,7 +288,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
         this.messageListeners.push(handler);
     }
 
-    public setupDefaultMessages(customHandlers?: { [command: string]: (message: WebviewMessage) => void }): void {
+    public setupDefaultMessages(customHandlers?: { [command: string]: (message: WebviewMessage) => void | Promise<void> }): void {
         if (this.defaultListener) {
             this.messageListeners = this.messageListeners.filter((listener) => listener !== this.defaultListener);
         }
@@ -296,7 +296,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
         this.defaultListener = async (message: WebviewMessage) => {
             const messageType = message.type || message.command;
             if (customHandlers && messageType && customHandlers[messageType]) {
-                customHandlers[messageType](message);
+                await customHandlers[messageType](message);
                 return;
             }
             await MessageHandler.handleWebviewMessage(message, this.buildMessageContext());

@@ -7,7 +7,7 @@
 // equivalent in core — `tar` argument construction, `7z -slt` listing parsing,
 // and the gzip header's original-name field.
 
-import * as path from 'path';
+import * as path from '../../shims/desktopPath';
 
 export interface ArchivePreviewEntry {
     path: string;

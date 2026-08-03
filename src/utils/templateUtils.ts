@@ -1,5 +1,5 @@
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from '../shims/desktopPath';
+import * as fs from '../shims/desktopFs';
 import { getBundledTextAsset } from './bundledAssets';
 import { escapeJsonForHtmlScriptTag } from './htmlEscaping';
 

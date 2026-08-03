@@ -1,6 +1,9 @@
+import { Platform } from 'obsidian';
+
 type NativeChildProcess = typeof import('child_process');
 
 function nativeChildProcess(): NativeChildProcess | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         return req ? req('child_process') as NativeChildProcess : null;

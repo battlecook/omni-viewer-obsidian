@@ -1,4 +1,4 @@
-import { Buffer } from 'buffer';
+import { Buffer } from './shims/globals';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { normalizePath, Notice, TFile } from 'obsidian';
@@ -179,7 +179,7 @@ function mediaViewer(category: 'image' | 'video' | 'audio', extensions: string[]
                     const targetPath = normalizePath(parent ? `${parent}/${name}` : name);
                     const bytes = Buffer.from(message.imageData, 'base64');
                     const existing = ctx.app.vault.getAbstractFileByPath(targetPath);
-                    const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+                    const data = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
                     if (existing) {
                         if (!(existing instanceof TFile)) {
                             new Notice(`Cannot save ${targetPath}: a folder already uses that name.`);
@@ -256,7 +256,12 @@ const archiveViewer: ViewerDefinition = {
         const hostContext: ArchiveViewerContext = {
             assets: { resolveAssetUrl: async (assetPath) => assetPath },
             i18n: { t: (key, args) => resolveCatalogMessage(key, args) },
-            logger: { log: (level, message) => level === 'error' ? console.error(message) : level === 'warn' ? console.warn(message) : console.info(message) },
+            logger: {
+                log: (level, message) => {
+                    if (level === 'error') console.error(message);
+                    else if (level === 'warn') console.warn(message);
+                }
+            },
             save: { saveFile: async (name, bytes) => { await saveBinaryBesideFile(ctx.app, ctx.file, name, bytes); } }
         };
         const decoder = {

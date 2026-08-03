@@ -1,5 +1,5 @@
-import * as path from 'path';
-import * as zlib from 'zlib';
+import * as path from '../shims/desktopPath';
+import * as zlib from '../shims/desktopZlib';
 import { BUNDLED_BINARY_ASSETS_BASE64, BUNDLED_TEXT_ASSETS } from '../generated/assets';
 
 const MIME_TYPES: Record<string, string> = {

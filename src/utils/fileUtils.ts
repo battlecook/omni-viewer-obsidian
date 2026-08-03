@@ -1,7 +1,7 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
-import { spawn } from 'child_process';
+import * as path from '../shims/desktopPath';
+import * as fs from '../shims/desktopFs';
+import * as os from '../shims/desktopOs';
+import { spawn } from '../shims/desktopChildProcess';
 import JSZip from 'jszip';
 import {
     fileToDataUrl as readFileToDataUrl,

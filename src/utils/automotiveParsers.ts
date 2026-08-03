@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from '../shims/desktopFs';
 
 export interface AutomotiveSummaryItem {
     label: string;
@@ -274,8 +274,8 @@ export class AutomotiveParsers {
         const buffer = await fs.promises.readFile(filePath);
         const isObjectContainer = buffer.length >= 4 && buffer.subarray(0, 4).toString('binary') === 'Obj\x01';
         const metadata = isObjectContainer ? this.readAvroMetadata(buffer) : [];
-        const schema = metadata.find(row => row[0] === 'avro.schema')?.[1] as string | undefined;
-        const codec = metadata.find(row => row[0] === 'avro.codec')?.[1] as string | undefined;
+        const schema = metadata.find(row => row[0] === 'avro.schema')?.[1];
+        const codec = metadata.find(row => row[0] === 'avro.codec')?.[1];
         const syncMarker = buffer.length >= 16 ? buffer.subarray(Math.max(0, buffer.length - 16)).toString('hex') : '-';
 
         return {

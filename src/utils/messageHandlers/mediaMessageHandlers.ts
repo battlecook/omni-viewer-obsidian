@@ -1,5 +1,5 @@
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from '../../shims/desktopPath';
+import * as fs from '../../shims/desktopFs';
 import { Notice } from 'obsidian';
 import { WebviewMessage } from './types';
 import { MessageContext } from './context';
@@ -34,7 +34,7 @@ export class MediaMessageHandlers {
             }
 
             const imageBuffer = Buffer.from(message.imageData, 'base64');
-            await adapter.writeBinary(vaultPath, imageBuffer.buffer.slice(imageBuffer.byteOffset, imageBuffer.byteOffset + imageBuffer.byteLength) as ArrayBuffer);
+            await adapter.writeBinary(vaultPath, imageBuffer.buffer.slice(imageBuffer.byteOffset, imageBuffer.byteOffset + imageBuffer.byteLength));
 
             new Notice(`Image saved: ${vaultPath}`);
         } catch (error) {

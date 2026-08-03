@@ -1,5 +1,5 @@
 import { App, Notice, TFile, normalizePath, requestUrl } from 'obsidian';
-import * as path from 'path';
+import * as path from './shims/desktopPath';
 import { openExternal, promptText } from './platform';
 
 const SHARE_API_BASE = 'https://omni-viewer-share-624036133562.us-west1.run.app';

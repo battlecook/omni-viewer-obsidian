@@ -1,5 +1,5 @@
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from '../../shims/desktopPath';
+import * as fs from '../../shims/desktopFs';
 import { Notice } from 'obsidian';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { WebviewMessage } from './types';

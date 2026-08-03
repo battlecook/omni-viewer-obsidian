@@ -1,0 +1,133 @@
+.omni-viewer-content {
+    padding: 0;
+    overflow: hidden;
+}
+
+.is-mobile .omni-viewer-content {
+    padding-bottom: env(safe-area-inset-bottom);
+    touch-action: pan-x pan-y;
+}
+
+.is-mobile .omni-viewer-content button,
+.is-mobile .omni-viewer-content input,
+.is-mobile .omni-viewer-content select,
+.is-mobile .omni-viewer-content [role="button"] {
+    min-height: 40px;
+    font-size: max(16px, var(--font-ui-small));
+}
+
+.is-mobile .omni-viewer-content .omni-csv__toolbar,
+.is-mobile .omni-viewer-content .omni-pdf__toolbar,
+.is-mobile .omni-viewer-content .omni-ppt__toolbar,
+.is-mobile .omni-viewer-content .omni-safetensors__toolbar,
+.is-mobile .omni-viewer-content .omni-latex__toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.is-mobile .omni-viewer-content .omni-csv__toolbar > *,
+.is-mobile .omni-viewer-content .omni-pdf__toolbar > * {
+    max-width: 100%;
+}
+
+.is-mobile .omni-viewer-content .omni-csv__table-wrap,
+.is-mobile .omni-viewer-content .omni-pdf__workspace,
+.is-mobile .omni-viewer-content .omni-ppt__viewport,
+.is-mobile .omni-viewer-content .omni-safetensors__table-wrap {
+    overscroll-behavior: contain;
+}
+
+.is-mobile .omni-viewer-content .omni-latex__source {
+    font-size: max(16px, var(--font-ui-small));
+}
+
+.is-mobile .omni-viewer-content .omni-latex__preview,
+.is-mobile .omni-viewer-content .omni-latex__source {
+    overscroll-behavior: contain;
+}
+
+.is-mobile .omni-viewer-content .omni-ppt__viewport {
+    padding: 10px;
+}
+
+.is-mobile .omni-viewer-content .omni-ppt__toolbar {
+    overflow-x: auto;
+}
+
+.is-mobile .omni-viewer-content .omni-archive__entry {
+    min-height: 44px;
+}
+
+.omni-word-print-frame {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+    visibility: hidden;
+}
+
+.omni-viewer-content .omni-viewer-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background-color: transparent;
+}
+
+/* omni-viewer-core theme mapping (DESIGN.md §6): --omni-* tokens are the only
+   variables core viewers read; custom properties pierce the shadow boundary. */
+.omni-viewer-content {
+    --omni-bg: var(--background-primary);
+    --omni-bg-secondary: var(--background-secondary);
+    --omni-fg: var(--text-normal);
+    --omni-fg-muted: var(--text-muted);
+    --omni-muted: var(--text-muted);
+    --omni-border: var(--background-modifier-border);
+    --omni-accent: var(--interactive-accent);
+    --omni-accent-fg: var(--text-on-accent);
+    --omni-input-bg: var(--background-modifier-form-field);
+    --omni-button-bg: var(--interactive-normal);
+    --omni-button-hover-bg: var(--interactive-hover);
+    --omni-toolbar-bg: var(--background-secondary);
+    --omni-header-bg: var(--background-secondary);
+    --omni-hover: var(--background-modifier-hover);
+    /* Parquet viewer: context-menu background + focus ring. Unmapped these fall
+       back to the core's hardcoded #fff / #2684ff, so the menu turns white in
+       dark themes. */
+    --omni-menu-bg: var(--background-secondary);
+    --omni-focus: var(--interactive-accent);
+    /* structured viewers (toml) use these for tree hover/selection + parse
+       errors; unmapped they keep the core's hardcoded dark fallbacks. */
+    --omni-hover-bg: var(--background-modifier-hover);
+    --omni-selection-bg: var(--text-selection);
+    --omni-error: var(--text-error);
+    /* The office-family viewers (ppt/word/hwp) name the same token differently;
+       without this their toolbars keep the core's dark hardcoded fallback. */
+    --omni-control-bg: var(--interactive-normal);
+    /* Word/hwp header + error text; unmapped these fall back to dark #252526 /
+       #f48771 and ignore the Obsidian theme. */
+    --omni-panel-bg: var(--background-secondary);
+    --omni-danger: var(--text-error);
+    --omni-warning-fg: var(--text-warning);
+    --omni-warning-bg: var(--background-modifier-warning);
+    --omni-error-fg: var(--text-error);
+    --omni-font: var(--font-interface);
+    --omni-font-mono: var(--font-monospace);
+    --omni-font-size: var(--font-ui-small);
+    /* Archive viewer uses a few differently-named tokens + its own extras. */
+    --omni-muted-fg: var(--text-muted);
+    --omni-mono-font: var(--font-monospace);
+    --omni-badge-bg: var(--background-modifier-border);
+    --omni-code-bg: var(--background-primary-alt);
+    /* Diagram viewers (mermaid/plantuml): toolbar buttons, status/caption
+       colors, source editor + mono font. Unmapped these fall back to the
+       core's hardcoded dark values and ignore the Obsidian theme. */
+    --omni-font-family: var(--font-interface);
+    --omni-mono: var(--font-monospace);
+    --omni-success: var(--text-success);
+    --omni-warning: var(--text-warning);
+    --omni-button-secondary-bg: var(--interactive-normal);
+    --omni-editor-bg: var(--background-primary);
+}

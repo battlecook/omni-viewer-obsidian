@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.1] - 2026-08-03
+
+### Changed
+- Updated `omni-viewer-core` from 0.12.0 to 0.12.1.
+- Moved the LaTeX viewer's core and KaTeX styling into the release `styles.css`: the viewer now mounts in scoped light DOM, and the build embeds its 20 woff2 fonts while limiting KaTeX selectors to Omni Viewer.
+- Replaced source-level imports of Node.js built-ins (`fs`, `path`, `os`, `child_process`, `zlib`, `stream/promises`, and `buffer`) with explicit mobile-compatible shims whose native access is guarded by `Platform.isDesktopApp`.
+- Removed informational console logging from core-viewer adapters while retaining error and warning reporting.
+
+### Fixed
+- Resolved the Obsidian Community plugin review error caused by creating and attaching runtime `<style>` elements in the LaTeX viewer.
+- Declared `emf-converter` as a direct dependency because the PowerPoint adapter imports it directly.
+- Made asynchronous custom iframe message handlers part of the host contract and awaited them, preventing rejected handler promises from being dropped.
+- Updated the `setImmediate` shim to use `window`, `window.setTimeout()`, and `window.clearTimeout()` for Obsidian pop-out window compatibility.
+- Replaced review-flagged DOM creation and unnecessary type assertions where the original types were already accepted.
+
+### Build
+- Added a deterministic stylesheet build step that combines the maintained plugin CSS, `omni-viewer-core` LaTeX CSS, scoped KaTeX CSS, and embedded fonts into the release `styles.css`.
+- Removed KaTeX CSS and fonts from the JavaScript asset bundle now that Obsidian loads them from `styles.css`.
+
 ## [0.5.0] - 2026-08-02
 
 ### Added

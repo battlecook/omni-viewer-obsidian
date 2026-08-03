@@ -6,8 +6,8 @@
 // shadow-root mount; theme mapping (--omni-* <- Obsidian variables) lives in
 // styles.css and pierces the shadow boundary as custom properties.
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { mountCsvViewer } from 'omni-viewer-core/viewers/csv';
 import type { CsvViewerContext } from 'omni-viewer-core/viewers/csv';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
@@ -38,7 +38,6 @@ function coreHostContext(renderCtx: RenderContext): CsvViewerContext {
                 const prefix = '[omni-viewer csv]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };

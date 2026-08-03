@@ -10,8 +10,8 @@
 // (soffice) path. Without that dependency the core would simply report the
 // deck as unreadable, so wiring it preserves the previous behaviour.
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { Platform } from 'obsidian';
 import type { FileSaveService, HostContext } from 'omni-viewer-core/host';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
@@ -47,7 +47,6 @@ function coreHostContext(renderCtx: RenderContext, objectUrls: Set<string>): Ppt
                 const prefix = '[omni-viewer ppt]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         },
         // Export only. Deliberately no `writeback`: in the PDF fallback the core

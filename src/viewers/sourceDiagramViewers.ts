@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import mermaid from 'mermaid';
 import { render as renderPlantUmlSvg } from 'puml-canvas-js';
 import { Platform } from 'obsidian';
@@ -145,7 +145,6 @@ function diagramHostContext(
                 const prefix = `[omni-viewer ${logLabel}]`;
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };

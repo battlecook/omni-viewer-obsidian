@@ -7,11 +7,10 @@
 // Entry bytes are bounded per call by the caller's `maxBytes` (execFile
 // maxBuffer / a capped gunzip stream), matching core's preview/limit budgets.
 
-import * as fs from 'fs';
-import { execFile, spawn } from 'child_process';
-import { promisify } from 'util';
-import { createGunzip } from 'zlib';
-import { pipeline } from 'stream/promises';
+import * as fs from '../../shims/desktopFs';
+import { execFile, spawn } from '../../shims/desktopChildProcess';
+import { createGunzip } from '../../shims/desktopZlib';
+import { pipeline } from '../../shims/desktopStreamPromises';
 import JSZip from 'jszip';
 import type { ArchiveEntry, OpenArchiveHandle } from 'omni-viewer-core/viewers/archive';
 import {
@@ -22,7 +21,26 @@ import {
     parseSevenZipListing
 } from './archive';
 
-const execFileAsync = promisify(execFile);
+type ExecFileOptions = import('child_process').ExecFileOptions;
+type ExecFileOutput = string | Buffer;
+type ExecFileResult<T extends ExecFileOutput> = { stdout: T; stderr: T };
+
+function execFileAsync(command: string, args: string[], options: ExecFileOptions & { encoding: 'buffer' }): Promise<ExecFileResult<Buffer>>;
+function execFileAsync(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileResult<string>>;
+function execFileAsync(command: string, args: string[], options: ExecFileOptions): Promise<ExecFileResult<ExecFileOutput>> {
+    const run = execFile as unknown as (
+        command: string,
+        args: string[],
+        options: ExecFileOptions,
+        callback: (error: Error | null, stdout: ExecFileOutput, stderr: ExecFileOutput) => void
+    ) => void;
+    return new Promise((resolve, reject) => {
+        run(command, args, options, (error, stdout, stderr) => {
+            if (error) reject(error);
+            else resolve({ stdout, stderr });
+        });
+    });
+}
 const LIST_MAX_BUFFER = 16 * 1024 * 1024;
 const GZIP_HEADER_BYTES = 4096;
 

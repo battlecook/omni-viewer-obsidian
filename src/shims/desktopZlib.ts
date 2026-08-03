@@ -1,10 +1,12 @@
 // browserify-zlib has no bundled TypeScript declaration.
 // @ts-ignore
 import browserZlib from 'browserify-zlib';
+import { Platform } from 'obsidian';
 
 type NativeZlib = typeof import('zlib');
 
 function nativeZlib(): NativeZlib | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         return req ? req('zlib') as NativeZlib : null;

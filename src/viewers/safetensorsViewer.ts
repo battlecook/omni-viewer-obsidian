@@ -20,7 +20,6 @@ function coreHostContext(): SafetensorsViewerContext {
                 const prefix = '[omni-viewer safetensors]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };

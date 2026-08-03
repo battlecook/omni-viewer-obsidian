@@ -1,11 +1,13 @@
-import { Buffer as BrowserBuffer } from 'buffer';
+import { Buffer as BrowserBuffer } from 'buffer/';
 // process/browser has no bundled TypeScript declaration.
 // @ts-ignore
 import browserProcess from 'process/browser';
+import { Platform } from 'obsidian';
 
 type NativeProcess = typeof import('process');
 
 function nativeProcess(): NativeProcess | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         return req ? req('process') as NativeProcess : null;
@@ -15,6 +17,7 @@ function nativeProcess(): NativeProcess | null {
 }
 
 function nativeBuffer(): typeof BrowserBuffer | null {
+    if (!Platform.isDesktopApp) return null;
     try {
         const req = (window as Window & { require?: (id: string) => unknown }).require;
         if (!req) return null;

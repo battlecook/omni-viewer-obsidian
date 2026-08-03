@@ -5,8 +5,8 @@
 // into renderer memory whole. Listing, per-entry preview, and save-to-disk all
 // stream through the adapter (JSZip / zlib / system `7z` / `tar`).
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { mountArchiveViewer } from 'omni-viewer-core/viewers/archive';
 import type { ArchiveStreamingSource, ArchiveViewerContext } from 'omni-viewer-core/viewers/archive';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
@@ -27,7 +27,6 @@ function coreHostContext(filePath: string): ArchiveViewerContext {
                 const prefix = '[omni-viewer archive]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         },
         // Streaming save: the adapter pipes the entry to the chosen file, so a

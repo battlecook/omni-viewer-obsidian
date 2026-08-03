@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from '../shims/desktopFs';
 import { AutomotiveParsers } from '../utils/automotiveParsers';
 import { Hdf5Parser } from '../utils/hdf5Parser';
 import { MatParser } from '../utils/matParser';
@@ -16,7 +16,7 @@ function createAutomotiveViewer(options: {
     extensions: string[];
     icon: string;
     errorContent: ViewerErrorContent;
-    parse: (filePath: string, fileSize: string) => Promise<unknown> | unknown;
+    parse: (filePath: string, fileSize: string) => unknown;
 }): ViewerDefinition {
     return {
         viewType: options.viewType,

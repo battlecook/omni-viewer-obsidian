@@ -23,7 +23,7 @@ export interface ViewerHost {
      * Wire the shared MessageHandler for save/log/share messages
      * (vscode: MessageHandler.setupMessageListener). Custom handlers take priority.
      */
-    setupDefaultMessages(customHandlers?: { [command: string]: (message: WebviewMessage) => void }): void;
+    setupDefaultMessages(customHandlers?: { [command: string]: (message: WebviewMessage) => void | Promise<void> }): void;
     /** Convert an absolute filesystem path to a URL loadable inside the viewer (vscode: webview.asWebviewUri). */
     asWebviewUri(absolutePath: string): string;
     /**

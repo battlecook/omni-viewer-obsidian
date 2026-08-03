@@ -4,8 +4,8 @@
 // the CSV viewer). Style isolation comes from the core's shadow-root mount;
 // theme mapping (--omni-* <- Obsidian variables) lives in styles.css.
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { mountJsonViewer } from 'omni-viewer-core/viewers/json';
 import type { JsonViewerContext } from 'omni-viewer-core/viewers/json';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
@@ -32,7 +32,6 @@ function coreHostContext(renderCtx: RenderContext): JsonViewerContext {
                 const prefix = '[omni-viewer json]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };

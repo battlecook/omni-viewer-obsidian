@@ -68,7 +68,7 @@ function createPrintService(container: HTMLElement): PrintService {
             try {
                 // This stylesheet belongs to the isolated print document,
                 // which cannot inherit the plugin's styles.css rules.
-                const style = doc.createElement('style');
+                const style = doc.head.createEl('style');
                 // The iframe is a bare document with no --omni-* tokens, so the
                 // core CSS would use its dark hardcoded fallbacks. Pin a light,
                 // paper-like surface: the document should print on white
@@ -78,8 +78,6 @@ function createPrintService(container: HTMLElement): PrintService {
                     'html,body{background:#fff;margin:0}' +
                     '.omni-word__content--print{transform:none!important}' +
                     wordViewerCss;
-                doc.head.append(style);
-
                 // Rebuild the frame/viewport ancestry so the core's `@media
                 // print` rules (which target .omni-word__viewport) still apply.
                 const frame = doc.body.createEl('section', { cls: 'omni-word' });
@@ -131,7 +129,6 @@ function coreHostContext(container: HTMLElement): WordViewerContext {
                 const prefix = '[omni-viewer word]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };

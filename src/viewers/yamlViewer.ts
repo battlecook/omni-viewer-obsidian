@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from '../shims/desktopFs';
 import { buildYamlViewerModel } from '../utils/yamlNodeBuilder';
 import { FileUtils } from '../utils/fileUtils';
 import { TemplateUtils } from '../utils/templateUtils';

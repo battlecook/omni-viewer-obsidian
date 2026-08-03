@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { Notice, Platform } from 'obsidian';
 import * as pdfLib from 'pdf-lib';
 import {
@@ -31,7 +31,6 @@ function createCoreContext(
                 const prefix = '[omni-viewer pdf]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         },
         writeback: {

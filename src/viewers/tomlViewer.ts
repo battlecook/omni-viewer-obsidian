@@ -4,8 +4,8 @@
 // the JSON viewer). Style isolation comes from the core's shadow-root mount;
 // theme mapping (--omni-* <- Obsidian variables) lives in styles.css.
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from '../shims/desktopFs';
+import * as path from '../shims/desktopPath';
 import { mountTomlViewer } from 'omni-viewer-core/viewers/toml';
 import type {
     ClipboardService,
@@ -43,7 +43,6 @@ function coreHostContext(renderCtx: RenderContext): TomlViewerContext {
                 const prefix = '[omni-viewer toml]';
                 if (level === 'error') console.error(prefix, message);
                 else if (level === 'warn') console.warn(prefix, message);
-                else console.info(prefix, message);
             }
         }
     };
