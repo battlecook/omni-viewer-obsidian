@@ -27,4 +27,6 @@ files where noted.
 
 Runtime npm dependencies (bundled into `main.js`) are listed in `package.json`
 and retain their respective licenses. The LaTeX viewer additionally embeds
-KaTeX JavaScript/CSS/fonts (MIT) and DOMPurify (MPL-2.0 OR Apache-2.0).
+KaTeX JavaScript/CSS/fonts (MIT) and DOMPurify (MPL-2.0 OR Apache-2.0). The
+GGUF viewer bundles `@huggingface/gguf` and its `@huggingface/tasks`
+dependency (both MIT).

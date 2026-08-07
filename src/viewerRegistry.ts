@@ -33,6 +33,8 @@ import { pptViewer } from './viewers/pptViewer';
 import { excelViewer, hwpViewer, psdViewer } from './viewers/officeViewers';
 import { wordViewer } from './viewers/wordViewer';
 import { safetensorsViewer } from './viewers/safetensorsViewer';
+import { ggufViewer } from './viewers/ggufViewer';
+import { onnxViewer } from './viewers/onnxViewer';
 import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
@@ -68,6 +70,8 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     hdf5Viewer,
     matViewer,
     safetensorsViewer,
+    ggufViewer,
+    onnxViewer,
     hwpViewer,
     psdViewer,
     excelViewer,

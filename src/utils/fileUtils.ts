@@ -52,6 +52,8 @@ export type OmniViewerViewType =
     | 'omni-viewer.hdf5Viewer'
     | 'omni-viewer.matViewer'
     | 'omni-viewer.safetensorsViewer'
+    | 'omni-viewer.ggufViewer'
+    | 'omni-viewer.onnxViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -185,6 +187,10 @@ export class FileUtils {
 
         if (this.matchesBytes(buffer, [0x89, 0x48, 0x44, 0x46, 0x0d, 0x0a, 0x1a, 0x0a])) {
             return this.signatureMatch('omni-viewer.hdf5Viewer', 'Matched the HDF5 signature.');
+        }
+
+        if (this.hasAsciiPrefix(buffer, 'GGUF')) {
+            return this.signatureMatch('omni-viewer.ggufViewer', 'Matched the GGUF magic bytes.');
         }
 
         if (this.hasAsciiPrefix(buffer, 'LOGG')) {

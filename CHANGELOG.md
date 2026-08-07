@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0] - 2026-08-07
+
+### Added
+- Added an ONNX viewer for `.onnx` on desktop and mobile, backed by `omni-viewer-core`: connected computation graph with node inspection, searchable node/tensor/input-output tables, model metadata and opsets, and JSON copy. Weight payloads are not decoded.
+- Added a GGUF viewer for `.gguf` on desktop and mobile: summary cards, searchable tensor and metadata tables, structure preview, and JSON copy. Tensor payload bytes are never read.
+
+### Changed
+- Updated `omni-viewer-core` from 0.12.1 to 0.13.0.
+
+### Performance
+- GGUF models are inspected through filesystem range reads on desktop, so only the header, metadata, and tensor index are loaded. A 256 MiB model reads 2 MB (0.75%). Mobile has no filesystem access and falls back to a whole-file read, limited to 512 MB.
+
+### Build
+- Resolved `@huggingface/gguf` to its browser build in `esbuild.config.mjs`. Its `exports` entry is the Node build, which imports `fs/promises` `open`/`stat` through a local-file helper the GGUF adapter never uses, since the adapter always supplies its own range `fetch`.
+- Declared `@huggingface/gguf` as a direct dependency because the build now resolves it by path.
+
 ## [0.5.2] - 2026-08-03
 
 ### Changed

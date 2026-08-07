@@ -17,6 +17,7 @@ const jsZipSourceEntryPath = path.join(dirname, "node_modules/jszip/lib/index.js
 const setImmediateShimPath = path.join(dirname, "src/shims/setimmediate.ts");
 const nativePromiseShimPath = path.join(dirname, "src/shims/nativePromise.cjs");
 const globalsShimPath = path.join(dirname, "src/shims/globals.ts");
+const ggufBrowserEntryPath = path.join(dirname, "node_modules/@huggingface/gguf/dist/browser/index.mjs");
 const browserAliases = new Map([
 	["buffer", path.join(dirname, "node_modules/buffer/index.js")],
 	["path", path.join(dirname, "src/shims/desktopPath.ts")],
@@ -69,6 +70,20 @@ const context = await esbuild.context({
 					path: browserAliases.get(args.path),
 				}));
 			}
+		},
+		{
+			name: "gguf-browser-entry",
+			setup(build) {
+				// @huggingface/gguf's "exports" entry is the Node build, which pulls in
+				// a FileBlob helper importing fs/promises `open`/`stat` — neither exists
+				// on the desktop shim, and the local-file path it serves is unused here
+				// (the GGUF adapter always supplies its own range `fetch`). esbuild does
+				// not apply the package's "browser" map to a path resolved through
+				// "exports", so point at the browser build directly.
+				build.onResolve({ filter: /^@huggingface\/gguf$/ }, () => ({
+					path: ggufBrowserEntryPath,
+				}));
+			},
 		},
 		{
 			name: "safe-jszip-runtime",

@@ -13,7 +13,7 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 | Tabular | csv, tsv, xlsx, xls, parquet, jsonl/ndjson/jsonlines |
 | Automotive / measurement | dbc, arxml, a2l, asc, blf, mf4, avro, bag (ROS), db3 (SQLite), reqif, pcap, pcapng, stp/step, h5/hdf5/he5, mat |
 | Documents | pdf (view + annotate/merge/save), docx/doc, ppt/pptx, hwp/hwpx, psd, md/markdown, tex/latex/ltx |
-| Data / source | safetensors, json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
+| Data / source | safetensors, gguf, onnx, json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
 | GIS | shp (Shapefile) |
 
 ## Features carried over from the vscode extension
@@ -23,6 +23,7 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 - **PDF editor**: text, stamps, signatures, page reorder, merge with another PDF, save / save-as.
 - **CSV editor**: cell editing writes back to the file.
 - **LaTeX structure and math preview**: outline, source editing, tables, theorem blocks, KaTeX formulas, and vault-backed `\\input`/`\\include` resolution. It is a partial preview, not a TeX compiler or typeset PDF.
+- **ML model inspection**: ONNX graph topology with node inspection and searchable node/tensor/IO tables; GGUF metadata, tensor index, and quantization summary read without touching the tensor payload.
 - **Content-signature rerouting**: files whose content doesn't match their extension are opened with the right viewer automatically.
 - **Share**: upload a copy of the selected file to Omni Viewer's external share service (max 10 MB, 5-minute expiry) and copy the share link; open a shared link to download it into the `omni-viewer-shared` vault folder. See the [Privacy Policy](https://omni-viewer-web.web.app/privacy/) for details.
 - Refresh command to re-render the active viewer.
@@ -58,9 +59,11 @@ Enable **Omni Viewer** in Settings → Community plugins. The same bundle runs o
 
 On Obsidian mobile, Omni Viewer uses vault APIs instead of local filesystem paths. Mobile currently supports:
 
-- ZIP/JAR/APK, audio/image/browser-native video, CSV, PDF, Safetensors, JSON/JSONL, YAML, TOML, DBC
+- ZIP/JAR/APK, audio/image/browser-native video, CSV, PDF, Safetensors, ONNX, JSON/JSONL, YAML, TOML, DBC
 - Markdown, LaTeX, Mermaid, PlantUML, Protocol Buffer schemas
 - XLS/XLSX, DOCX, HWP/HWPX, PPT/PPTX
+
+GGUF is desktop-first: models are inspected through filesystem range reads, so on mobile only files below 512 MB open (they have to be read into memory in full).
 
 Files created by Save As, PDF merge selection, and archive extraction stay inside the current vault. Desktop-only native helpers are intentionally unavailable on mobile: RAR/7z/DMG/system-tar extraction, ffmpeg transcoding, LibreOffice PDF fallback, and legacy DOC rendering. Browser codec support can differ between Android and iOS.
 

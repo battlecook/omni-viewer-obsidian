@@ -14,6 +14,8 @@ import { jsonViewer } from './viewers/jsonViewer';
 import { pdfViewer } from './viewers/pdfViewer';
 import { pptViewer } from './viewers/pptViewer';
 import { safetensorsViewer } from './viewers/safetensorsViewer';
+import { ggufViewer } from './viewers/ggufViewer';
+import { onnxViewer } from './viewers/onnxViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
@@ -328,6 +330,8 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     plantumlViewer,
     protoViewer,
     safetensorsViewer,
+    ggufViewer,
+    onnxViewer,
     excelViewer,
     mobileWordViewer,
     hwpViewer,
