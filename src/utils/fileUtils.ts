@@ -54,6 +54,7 @@ export type OmniViewerViewType =
     | 'omni-viewer.safetensorsViewer'
     | 'omni-viewer.ggufViewer'
     | 'omni-viewer.onnxViewer'
+    | 'omni-viewer.tfliteViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -191,6 +192,10 @@ export class FileUtils {
 
         if (this.hasAsciiPrefix(buffer, 'GGUF')) {
             return this.signatureMatch('omni-viewer.ggufViewer', 'Matched the GGUF magic bytes.');
+        }
+
+        if (this.hasAsciiPrefix(buffer.subarray(4), 'TFL3')) {
+            return this.signatureMatch('omni-viewer.tfliteViewer', 'Matched the TFLite FlatBuffer identifier.');
         }
 
         if (this.hasAsciiPrefix(buffer, 'LOGG')) {

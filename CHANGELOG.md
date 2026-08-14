@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0] - 2026-08-14
+
+### Added
+- Added a TFLite/LiteRT viewer for `.tflite` and `.lite` on desktop and mobile, backed by `omni-viewer-core`: graph topology with node inspection and searchable operator/tensor/input-output tables. The FlatBuffer metadata is inspected without decoding model weights.
+- Content-signature rerouting now recognises the `TFL3` FlatBuffer identifier, so TFLite models open in the TFLite viewer regardless of their extension.
+
+### Changed
+- Updated `omni-viewer-core` from 0.13.0 to 0.15.0, pinned to an exact version.
+
 ## [0.6.0] - 2026-08-07
 
 ### Added
