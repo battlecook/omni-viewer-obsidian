@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.0] - 2026-08-23
+
+### Added
+- Added a Keras viewer for `.keras` (Keras 3 archives) on desktop and mobile, and for legacy Keras HDF5 models on desktop, backed by `omni-viewer-core`: model summary, layer table with per-layer configuration and weight shapes, training/compile configuration, archive contents, and the saved model config. Weight payloads are never decoded — only dataset shapes and datatypes are read.
+- Content-signature rerouting now recognises Keras models: a ZIP holding `config.json`, `metadata.json` and `model.weights.h5` opens in the Keras viewer, and an HDF5 file carrying Keras model metadata is routed there instead of to the HDF5 viewer.
+- Keras models are read into memory whole, so a model above 512 MB is not rerouted to the Keras viewer: an HDF5 store keeps the HDF5 viewer, which pages its metadata in through the filesystem and therefore opens at any size, and a file that is only recognised as a Keras model by its contents keeps the viewer its own extension already opened. A `.keras` archive above the limit reports that it is too large.
+
+### Changed
+- Updated `omni-viewer-core` from 0.15.0 to 0.16.0.
+
 ## [0.7.0] - 2026-08-14
 
 ### Added
