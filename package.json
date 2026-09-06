@@ -1,7 +1,7 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.8.0",
-  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
+  "version": "0.9.0",
+  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -41,7 +41,10 @@
     "onnx",
     "tflite",
     "litert",
-    "keras"
+    "keras",
+    "coreml",
+    "mlmodel",
+    "mlpackage"
   ],
   "devDependencies": {
     "@types/node": "^16.18.0",
@@ -66,7 +69,7 @@
     "katex": "0.16.47",
     "mermaid": "^11.16.0",
     "music-metadata": "^11.8.3",
-    "omni-viewer-core": "0.16.0",
+    "omni-viewer-core": "0.17.0",
     "path-browserify": "^1.0.1",
     "pdf-lib": "^1.17.1",
     "process": "^0.11.10",

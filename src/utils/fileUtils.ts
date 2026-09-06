@@ -18,6 +18,7 @@ import {
     readJsonlFilePreview as readJsonlPreview
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
+import { looksLikeCoremlSpec } from 'omni-viewer-core/parsers/coreml';
 
 export type OmniViewerViewType =
     | 'omni-viewer.audioViewer'
@@ -56,6 +57,7 @@ export type OmniViewerViewType =
     | 'omni-viewer.onnxViewer'
     | 'omni-viewer.tfliteViewer'
     | 'omni-viewer.kerasViewer'
+    | 'omni-viewer.coremlViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -289,6 +291,16 @@ export class FileUtils {
                 );
             }
 
+            // Same reasoning for an archived `.mlpackage`: the extension already
+            // settles it, and the archive viewer would read the ZIP whole
+            // anyway, so there is nothing to gain by inspecting the members.
+            if (ext === '.mlpackage') {
+                return this.signatureMatch(
+                    'omni-viewer.coremlViewer',
+                    'Matched a ZIP container carrying the Core ML package extension.'
+                );
+            }
+
             const zipType = await this.detectZipBasedViewType(filePath);
             if (zipType) {
                 return this.signatureMatch(zipType.viewType, zipType.reason);
@@ -355,6 +367,28 @@ export class FileUtils {
                 reason: 'Used the Safetensors extension fallback.',
                 matchedBySignature: false
             };
+        }
+
+        if (ext === '.mlmodel') {
+            return {
+                viewType: 'omni-viewer.coremlViewer',
+                reason: 'Used the Core ML extension fallback.',
+                matchedBySignature: false
+            };
+        }
+
+        // A Core ML specification carries no magic bytes — it opens with an
+        // ordinary protobuf varint — so the only content test available is
+        // decoding the wire format, which core does strictly enough to tell a
+        // spec from any other protobuf (an ONNX ModelProto included). It reads
+        // to the end of the buffer and rejects a truncated tail, so it can only
+        // be asked about a file the signature window holds in full; a larger
+        // one keeps whatever its extension gave it.
+        if (bufferLength < this.SIGNATURE_READ_SIZE && looksLikeCoremlSpec(buffer)) {
+            return this.signatureMatch(
+                'omni-viewer.coremlViewer',
+                'Matched a Core ML model specification.'
+            );
         }
 
         const textType = this.detectTextBasedViewType(buffer, ext);
@@ -670,6 +704,42 @@ export class FileUtils {
             || header.includes('model_weights');
     }
 
+    /**
+     * Recognizes an archive that *is* an `.mlpackage` bundle. The member prefix
+     * is resolved the way the core parser does — the shortest entry ending in
+     * `Manifest.json` wins, at whatever depth it sits, since zipping the bundle
+     * from the Finder keeps its `Model.mlpackage/` folder and nothing stops a
+     * second wrapper above that — and the specification the manifest describes
+     * is required alongside it, so a stray `Manifest.json` from an unrelated
+     * tool does not pull the archive away from the archive viewer.
+     *
+     * Everything the archive holds must then live under that prefix. A release
+     * or project archive that merely *contains* a model would otherwise be
+     * routed here and lose the archive viewer for all its other members, with
+     * no way back: opening it as an archive re-enters this detection and
+     * bounces straight to the Core ML viewer again.
+     */
+    private static hasCoremlPackageEntries(names: string[]): boolean {
+        const manifest = names
+            .filter(name => name.endsWith('Manifest.json'))
+            .sort((a, b) => a.length - b.length)[0];
+        if (!manifest) {
+            return false;
+        }
+
+        const prefix = manifest.slice(0, manifest.length - 'Manifest.json'.length);
+        if (!names.some(name => name.startsWith(`${prefix}Data/`) && name.endsWith('.mlmodel'))) {
+            return false;
+        }
+
+        return names.every(name => name.startsWith(prefix)
+            // The directory entries leading down to the bundle, which a
+            // recursive zip of a wrapping folder writes ahead of it.
+            || prefix.startsWith(name)
+            // Finder metadata, written beside whatever it describes.
+            || name.startsWith('__MACOSX/'));
+    }
+
     private static isShapefile(buffer: Buffer, ext: string): boolean {
         if (ext !== '.shp' || buffer.length < 100) {
             return false;
@@ -747,6 +817,19 @@ export class FileUtils {
                 return {
                     viewType: 'omni-viewer.kerasViewer',
                     reason: 'Matched a ZIP container with Keras model entries.'
+                };
+            }
+
+            // An `.mlpackage` archived under some other name. Zipping the bundle
+            // from the Finder keeps the `Model.mlpackage/` folder, so the
+            // manifest may sit one level down — the same prefix the core parser
+            // resolves the other members against. Both halves are required: a
+            // `Manifest.json` on its own says nothing, while the spec it points
+            // at always lives under `Data/`.
+            if (this.hasCoremlPackageEntries(names) && await this.fitsInMemory(filePath)) {
+                return {
+                    viewType: 'omni-viewer.coremlViewer',
+                    reason: 'Matched a ZIP container with Core ML package entries.'
                 };
             }
 

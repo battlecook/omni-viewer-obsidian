@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.0] - 2026-09-05
+
+### Added
+- Added a Core ML viewer for `.mlmodel` specifications and archived `.mlpackage` bundles on desktop and mobile, backed by `omni-viewer-core`: model summary and availability, prediction interfaces with input/output feature types and flexibility, the computation graph for both encodings (ML Program operations and neural-network layers, including nested blocks and pipeline stages), searchable operation and weight tables, package contents, and JSON copy. Weight payloads are never decoded — blob references are resolved to a file, an offset and a byte count.
+- Content-signature rerouting now recognises Core ML models: a ZIP that *is* an `.mlpackage` bundle — a `Manifest.json` with the specification it describes under `Data/`, and nothing outside that folder — opens in the Core ML viewer, and a bare specification is recognised by decoding its protobuf wire format, which is strict enough to tell it apart from other model protobufs such as ONNX. A release or project archive that merely contains a model keeps the archive viewer.
+- Core ML models are read into memory whole, so a model above 512 MB reports that it is too large, and a package above that limit is not rerouted to the Core ML viewer by its contents.
+- Rerouting a *bare* specification by its contents has a much lower ceiling than that: the wire format has to be decoded to the end of the buffer to be told apart from another protobuf, so only a file the 64 KB signature window holds in full is recognised. A larger specification keeps the viewer its own extension opens, which for `.mlmodel` is the Core ML viewer either way.
+
+### Changed
+- Updated `omni-viewer-core` from 0.16.0 to 0.17.0.
+
 ## [0.8.0] - 2026-08-23
 
 ### Added

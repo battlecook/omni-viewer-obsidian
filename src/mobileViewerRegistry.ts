@@ -18,6 +18,7 @@ import { ggufViewer } from './viewers/ggufViewer';
 import { onnxViewer } from './viewers/onnxViewer';
 import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
+import { coremlViewer } from './viewers/coremlViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
@@ -336,6 +337,7 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     onnxViewer,
     tfliteViewer,
     kerasViewer,
+    coremlViewer,
     excelViewer,
     mobileWordViewer,
     hwpViewer,

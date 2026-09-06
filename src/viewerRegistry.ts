@@ -37,6 +37,7 @@ import { ggufViewer } from './viewers/ggufViewer';
 import { onnxViewer } from './viewers/onnxViewer';
 import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
+import { coremlViewer } from './viewers/coremlViewer';
 import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
@@ -76,6 +77,7 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     onnxViewer,
     tfliteViewer,
     kerasViewer,
+    coremlViewer,
     hwpViewer,
     psdViewer,
     excelViewer,
