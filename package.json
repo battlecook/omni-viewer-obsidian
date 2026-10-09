@@ -1,7 +1,7 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.10.0",
-  "description": "Preview audio, image, video, archive, HAR, CSV, office, PDF, HWP, Jupyter Notebook, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, ExecuTorch, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
+  "version": "0.10.1",
+  "description": "Preview media, archives, office documents, PDFs, HWP, Jupyter notebooks, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, ExecuTorch, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Mermaid, PlantUML, and automotive files.",
   "main": "main.js",
   "repository": {
     "type": "git",

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.1] - 2026-10-09
+
+### Fixed
+- Shortened the plugin description to fit Obsidian's 250-character manifest limit and kept the package description in sync.
+
 ## [0.10.0] - 2026-10-06
 
 ### Added
