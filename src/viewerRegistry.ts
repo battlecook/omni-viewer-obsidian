@@ -38,6 +38,9 @@ import { onnxViewer } from './viewers/onnxViewer';
 import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
 import { coremlViewer } from './viewers/coremlViewer';
+import { pteViewer } from './viewers/pteViewer';
+import { harViewer } from './viewers/harViewer';
+import { notebookViewer } from './viewers/notebookViewer';
 import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
@@ -59,6 +62,8 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     reqifViewer,
     pcapViewer,
     pcapngViewer,
+    harViewer,
+    notebookViewer,
     jsonViewer,
     yamlViewer,
     jsonlViewer,
@@ -78,6 +83,7 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     tfliteViewer,
     kerasViewer,
     coremlViewer,
+    pteViewer,
     hwpViewer,
     psdViewer,
     excelViewer,

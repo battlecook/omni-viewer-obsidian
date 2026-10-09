@@ -57,6 +57,8 @@ export interface RenderContext {
     filePath: string;
     fileName: string;
     host: ViewerHost;
+    /** Aborted when this render is superseded or the view is unloaded. */
+    signal?: AbortSignal;
 }
 
 export interface ViewerDefinition {

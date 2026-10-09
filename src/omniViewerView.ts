@@ -73,6 +73,7 @@ export class OmniViewerView extends FileView implements ViewerHost {
     private messageListeners: MessageListener[] = [];
     private defaultListener: MessageListener | null = null;
     private renderToken = 0;
+    private renderAbortController: AbortController | null = null;
     /** Active omni-viewer-core viewer handle (direct DOM mount path). */
     private coreViewerHandle: { dispose(): void; isDirty?(): boolean } | null = null;
     /** Deadline (ms epoch) until which a self-write reload echo is suppressed. */
@@ -150,11 +151,23 @@ export class OmniViewerView extends FileView implements ViewerHost {
     }
 
     async onUnloadFile(_file: TFile): Promise<void> {
+        this.cancelRender();
         this.messageListeners = [];
         this.defaultListener = null;
         this.iframe = null;
         this.disposeCoreViewer();
         this.contentEl.empty();
+    }
+
+    onunload(): void {
+        this.cancelRender();
+        this.disposeCoreViewer();
+    }
+
+    private cancelRender(): void {
+        ++this.renderToken;
+        this.renderAbortController?.abort();
+        this.renderAbortController = null;
     }
 
     private disposeCoreViewer(): void {
@@ -194,7 +207,10 @@ export class OmniViewerView extends FileView implements ViewerHost {
             return;
         }
         this.suppressReloadUntil = 0;
-        const token = ++this.renderToken;
+        this.cancelRender();
+        const token = this.renderToken;
+        const abortController = new AbortController();
+        this.renderAbortController = abortController;
         this.messageListeners = [];
         this.defaultListener = null;
         this.disposeCoreViewer();
@@ -207,6 +223,9 @@ export class OmniViewerView extends FileView implements ViewerHost {
             const detection = Platform.isMobileApp
                 ? { viewType: this.definition.viewType as OmniViewerViewType, reason: 'Mobile vault path' }
                 : await FileUtils.detectViewerType(filePath, this.definition.viewType as OmniViewerViewType);
+            if (token !== this.renderToken) {
+                return;
+            }
             if (detection.viewType
                 && detection.viewType !== this.definition.viewType
                 && this.registeredViewTypes.has(detection.viewType)) {
@@ -217,10 +236,6 @@ export class OmniViewerView extends FileView implements ViewerHost {
                 return;
             }
 
-            if (token !== this.renderToken) {
-                return;
-            }
-
             const ctx: RenderContext = {
                 app: this.app,
                 templatesDir: this.templatesDir,
@@ -228,15 +243,16 @@ export class OmniViewerView extends FileView implements ViewerHost {
                 file,
                 filePath,
                 fileName: file.name,
-                host: this
+                host: this,
+                signal: abortController.signal
             };
 
             await this.definition.render(ctx);
         } catch (error) {
-            console.error(`Error setting up ${this.definition.displayName}:`, error);
-            if (token !== this.renderToken) {
+            if (token !== this.renderToken || abortController.signal.aborted) {
                 return;
             }
+            console.error(`Error setting up ${this.definition.displayName}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
             this.setHtml(renderErrorHtml(file.name, errorMessage, this.definition.errorContent));
         }

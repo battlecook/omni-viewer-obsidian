@@ -6,6 +6,7 @@ const sourcePath = path.join(rootDir, 'src', 'styles.css');
 const outputPath = path.join(rootDir, 'styles.css');
 const coreLatexPath = path.join(rootDir, 'node_modules', 'omni-viewer-core', 'dist', 'styles', 'latex.css');
 const coreWordPath = path.join(rootDir, 'node_modules', 'omni-viewer-core', 'dist', 'styles', 'word.css');
+const coreNotebookPath = path.join(rootDir, 'node_modules', 'omni-viewer-core', 'dist', 'styles', 'notebook.css');
 const katexPath = path.join(rootDir, 'node_modules', 'katex', 'dist', 'katex.min.css');
 const katexFontDir = path.join(rootDir, 'node_modules', 'katex', 'dist', 'fonts');
 
@@ -61,7 +62,7 @@ function scopeNestedRules(css, scope) {
             else if (css[close] === '}') depth--;
             close++;
         }
-        if (depth !== 0) throw new Error('Unbalanced CSS while scoping word styles.');
+        if (depth !== 0) throw new Error('Unbalanced CSS while scoping viewer styles.');
 
         const prelude = css.slice(cursor, open);
         const leading = prelude.match(/^(?:\s|\/\*[\s\S]*?\*\/)*$/)?.[0] ??
@@ -106,8 +107,15 @@ const coreWordCss = scopeNestedRules(
     fs.readFileSync(coreWordPath, 'utf8').trim(),
     '.omni-viewer-content .omni-viewer--word'
 ).trim();
-const katexCss = scopeRules(bundledKatexCss(), '.omni-viewer-content .omni-viewer--latex').trim();
+const coreNotebookCss = scopeNestedRules(
+    fs.readFileSync(coreNotebookPath, 'utf8').trim(),
+    '.omni-viewer-content .omni-viewer--notebook'
+).trim();
+const katexCss = scopeRules(
+    bundledKatexCss(),
+    '.omni-viewer-content :is(.omni-viewer--latex, .omni-viewer--notebook)'
+).trim();
 
-const output = `${sourceCss}\n\n/* Generated from omni-viewer-core. */\n${coreLatexCss}\n\n/* Generated from omni-viewer-core; selectors are limited to the Word viewer. */\n${coreWordCss}\n\n/* Generated from KaTeX; selectors are limited to the LaTeX viewer. */\n${katexCss}\n`;
+const output = `${sourceCss}\n\n/* Generated from omni-viewer-core. */\n${coreLatexCss}\n\n/* Generated from omni-viewer-core; selectors are limited to the Word viewer. */\n${coreWordCss}\n\n/* Generated from omni-viewer-core; selectors are limited to the Notebook viewer. */\n${coreNotebookCss}\n\n/* Generated from KaTeX; selectors are limited to the LaTeX and Notebook viewers. */\n${katexCss}\n`;
 fs.writeFileSync(outputPath, output);
 console.log(`Generated ${path.relative(rootDir, outputPath)}`);

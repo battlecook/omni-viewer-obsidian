@@ -1,7 +1,7 @@
 {
   "name": "omni-viewer-obsidian",
-  "version": "0.9.0",
-  "description": "Preview audio, image, video, archive, CSV, office, PDF, HWP, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
+  "version": "0.10.0",
+  "description": "Preview audio, image, video, archive, HAR, CSV, office, PDF, HWP, Jupyter Notebook, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, ExecuTorch, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Markdown, Mermaid, PlantUML, and automotive data files.",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -13,6 +13,7 @@
     "dev": "npm run assets && node esbuild.config.mjs",
     "build": "npm run assets && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "typecheck": "tsc -noEmit -skipLibCheck",
+    "test": "node --test tests/*.test.mjs",
     "deploy": "npm run build && PLUGIN_DIR=\"${OBSIDIAN_VAULT:-$HOME/Documents/Obsidian Vault}/.obsidian/plugins/omni-viewer\" && mkdir -p \"$PLUGIN_DIR\" && cp main.js manifest.json styles.css \"$PLUGIN_DIR/\" && echo \"Deployed to $PLUGIN_DIR\""
   },
   "keywords": [
@@ -44,11 +45,19 @@
     "keras",
     "coreml",
     "mlmodel",
-    "mlpackage"
+    "mlpackage",
+    "executorch",
+    "pte",
+    "har",
+    "http-archive",
+    "jupyter",
+    "notebook",
+    "ipynb"
   ],
   "devDependencies": {
     "@types/node": "^16.18.0",
     "esbuild": "^0.21.5",
+    "jsdom": "^24.1.3",
     "obsidian": "^1.5.7",
     "tslib": "^2.6.2",
     "typescript": "^5.0.4"
@@ -62,14 +71,16 @@
     "dompurify": "3.4.12",
     "emf-converter": "^2.0.0",
     "events": "^3.3.0",
+    "highlight.js": "11.11.1",
     "hwp.js": "^0.0.3",
     "hyparquet": "1.26.2",
     "hyparquet-compressors": "^1.1.1",
     "jszip": "^3.10.1",
     "katex": "0.16.47",
+    "marked": "16.4.2",
     "mermaid": "^11.16.0",
     "music-metadata": "^11.8.3",
-    "omni-viewer-core": "0.17.0",
+    "omni-viewer-core": "0.19.0",
     "path-browserify": "^1.0.1",
     "pdf-lib": "^1.17.1",
     "process": "^0.11.10",

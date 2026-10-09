@@ -19,6 +19,7 @@ import {
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 import { looksLikeCoremlSpec } from 'omni-viewer-core/parsers/coreml';
+import { looksLikeHar, looksLikeNotebook } from 'omni-viewer-core/registry';
 
 export type OmniViewerViewType =
     | 'omni-viewer.audioViewer'
@@ -39,6 +40,8 @@ export type OmniViewerViewType =
     | 'omni-viewer.reqifViewer'
     | 'omni-viewer.pcapViewer'
     | 'omni-viewer.pcapngViewer'
+    | 'omni-viewer.harViewer'
+    | 'omni-viewer.notebookViewer'
     | 'omni-viewer.jsonViewer'
     | 'omni-viewer.yamlViewer'
     | 'omni-viewer.jsonlViewer'
@@ -58,6 +61,7 @@ export type OmniViewerViewType =
     | 'omni-viewer.tfliteViewer'
     | 'omni-viewer.kerasViewer'
     | 'omni-viewer.coremlViewer'
+    | 'omni-viewer.pteViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -209,6 +213,13 @@ export class FileUtils {
 
         if (this.hasAsciiPrefix(buffer.subarray(4), 'TFL3')) {
             return this.signatureMatch('omni-viewer.tfliteViewer', 'Matched the TFLite FlatBuffer identifier.');
+        }
+
+        // ExecuTorch programs are FlatBuffers too, identified by `ET12` at the
+        // same offset. The viewer reads the program whole, so one too large to
+        // inspect keeps whatever its extension gave it.
+        if (this.hasAsciiPrefix(buffer.subarray(4), 'ET12') && await this.fitsInMemory(filePath)) {
+            return this.signatureMatch('omni-viewer.pteViewer', 'Matched the ExecuTorch program identifier.');
         }
 
         if (this.hasAsciiPrefix(buffer, 'LOGG')) {
@@ -873,6 +884,11 @@ export class FileUtils {
 
     private static detectTextBasedViewType(buffer: Buffer, ext: string): FileViewerDetectionResult | null {
         const sample = buffer.subarray(0, 16 * 1024).toString('utf8');
+        // Structured JSON formats can legally put their identifying keys after
+        // large metadata objects. Structured JSON sniffing uses the complete
+        // signature window already read by detectViewerType, while the more
+        // permissive text heuristics below stay on their smaller sample.
+        const signatureText = buffer.toString('utf8');
         const lines = sample
             .split(/\r?\n/)
             .map(line => line.trim())
@@ -901,10 +917,44 @@ export class FileUtils {
             };
         }
 
-        if (ext === '.jsonl' || ext === '.ndjson' || ext === '.jsonlines' || this.looksLikeJsonl(lines)) {
+        // Keep explicit notebooks here even when their input is malformed.
+        if (ext === '.ipynb') {
+            return {
+                viewType: 'omni-viewer.notebookViewer',
+                reason: 'Used the Jupyter Notebook extension fallback.',
+                matchedBySignature: false
+            };
+        }
+
+        if (ext === '.jsonl' || ext === '.ndjson' || ext === '.jsonlines'
+            || this.looksLikeJsonl(lines)
+            || this.looksLikeJsonlSignature(signatureText, buffer.length === this.SIGNATURE_READ_SIZE)) {
             return {
                 viewType: 'omni-viewer.jsonlViewer',
                 reason: 'Matched line-delimited JSON content.',
+                matchedBySignature: false
+            };
+        }
+
+        // HAR is JSON, so recognize its `log.entries` envelope before the
+        // generic JSON viewer claims a capture saved with a JSON extension.
+        if (ext === '.har' || looksLikeHar(signatureText)) {
+            return {
+                viewType: 'omni-viewer.harViewer',
+                reason: ext === '.har'
+                    ? 'Used the HAR extension fallback.'
+                    : 'Matched an HTTP Archive log with request entries.',
+                matchedBySignature: false
+            };
+        }
+
+        // Follow core's JSONL/HAR/Notebook/JSON sniffing order. A recovered
+        // first object in a JSONL stream can look like a notebook, but the
+        // Notebook parser cannot open multiple top-level JSON records.
+        if (looksLikeNotebook(signatureText)) {
+            return {
+                viewType: 'omni-viewer.notebookViewer',
+                reason: 'Matched a Jupyter Notebook v4 document.',
                 matchedBySignature: false
             };
         }
@@ -1033,8 +1083,24 @@ export class FileUtils {
         return null;
     }
 
-    private static looksLikeJsonl(lines: string[]): boolean {
-        if (lines.length < 2) {
+    private static looksLikeJsonlSignature(text: string, mayBeTruncated: boolean): boolean {
+        const lines = text.split(/\r?\n/);
+        const nonBlank = (line: string) => line.trim().length > 0;
+        if (this.looksLikeJsonl(lines.filter(nonBlank))) return true;
+        if (!mayBeTruncated) return false;
+        // A full signature window may end inside its final record. Retry with
+        // only complete lines, after first checking the entire sample so an
+        // exactly 64 KiB file with a complete last record still qualifies.
+        const tail = lines.pop() ?? '';
+        const completeLines = lines.filter(nonBlank);
+        if (this.looksLikeJsonl(completeLines)) return true;
+        // One complete record plus the opening of another is also a stream:
+        // the second record may be larger than the remaining signature window.
+        return /^\s*[\[{]/.test(tail) && this.looksLikeJsonl(completeLines, 1);
+    }
+
+    private static looksLikeJsonl(lines: string[], minimumRecords = 2): boolean {
+        if (lines.length < minimumRecords) {
             return false;
         }
 

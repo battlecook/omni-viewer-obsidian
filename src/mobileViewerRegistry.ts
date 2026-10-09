@@ -19,6 +19,9 @@ import { onnxViewer } from './viewers/onnxViewer';
 import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
 import { coremlViewer } from './viewers/coremlViewer';
+import { pteViewer } from './viewers/pteViewer';
+import { harViewer } from './viewers/harViewer';
+import { notebookViewer } from './viewers/notebookViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
@@ -322,6 +325,8 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     mediaViewer('video', ['mp4', 'mov', 'webm', 'm4v']),
     csvViewer,
     pdfViewer,
+    harViewer,
+    notebookViewer,
     jsonViewer,
     jsonlViewer,
     yamlViewer,
@@ -338,6 +343,7 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     tfliteViewer,
     kerasViewer,
     coremlViewer,
+    pteViewer,
     excelViewer,
     mobileWordViewer,
     hwpViewer,

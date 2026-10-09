@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.10.0] - 2026-10-06
+
+### Added
+- Added a HAR (`.har`) viewer for web and API failure analysis on desktop and mobile, backed by `omni-viewer-core`: request/status/size summaries, sortable and filterable request tables, per-request timing waterfalls, page and archive metadata, and detail tabs for headers, payloads, response bodies, cookies, and timings.
+- Content-based rerouting now recognises an HTTP Archive `log.entries` envelope before generic JSON, so HAR captures saved with a `.json` extension open in the HAR viewer on desktop when the envelope is present in the 64 KB signature window.
+- Added an ExecuTorch viewer for `.pte` programs on desktop and mobile, backed by `omni-viewer-core`: each method's kernel, delegate and move calls drawn as a graph with inputs, consumed constants and outputs; an inspector for arguments, delegate backends and compile specs, jump destinations and emitter stack traces; searchable instruction, value, input/output, delegate, segment and model-information panels; a method selector for multi-method programs; and JSON copy. Segment payloads — constant tensors, delegate blobs, mutable state, named data — are located but never decoded.
+- Content-signature rerouting now recognises the `ET12` FlatBuffer identifier, so ExecuTorch programs open in the ExecuTorch viewer regardless of their extension.
+- ExecuTorch programs are read into memory whole, so a program above 512 MB reports that it is too large, and one above that limit is not rerouted to the ExecuTorch viewer by its contents.
+- Added a read-only Jupyter Notebook (`.ipynb`, nbformat v4) viewer on desktop and mobile using `omni-viewer-core`: Markdown and KaTeX math, highlighted code, execution counts, saved rich outputs and tracebacks, attachments and relative vault images, cell search, and source/output visibility controls. Code and interactive widgets are never executed.
+- Preserved `.ipynb` routing before generic JSON/JSONL detection and added content-based routing for v4 notebooks saved as JSON when their envelope is present in the desktop signature window.
+- Limited notebooks to 64 MB before reading vault bytes, with the core's bounded cell/output previews and sanitization of saved HTML/SVG content.
+
+### Changed
+- Updated `omni-viewer-core` from 0.17.0 to 0.19.0.
+
+### Fixed
+- Preserved JSONL detection before Notebook content sniffing and used the full signature window, including complete lines before a truncated tail, so streams of notebook records continue to open in the JSONL viewer even when individual records exceed 16 KB.
+- Cancelled pending ExecuTorch renders when switching files or unloading a view, preventing a slow vault read from replacing the current program or retaining a disposed viewer.
+- Applied Obsidian theme colors inside the ExecuTorch viewer's shadow root so graph cards and inspector labels remain readable in light and dark themes.
+
+### Build
+- Bundled the Notebook renderer's Markdown/highlighting dependencies and scoped Notebook/KaTeX styles for offline desktop and mobile use.
+- Added Notebook adapter regression tests for rich rendering, sanitization, vault images, search/visibility controls, file detection, input limits, and render cancellation.
+- Added ExecuTorch adapter regression tests for core rendering, file detection, clipboard integration, file-size limits, invalid programs, and render cancellation.
+
 ## [0.9.0] - 2026-09-05
 
 ### Added

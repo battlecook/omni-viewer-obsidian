@@ -20,6 +20,7 @@
 .is-mobile .omni-viewer-content .omni-pdf__toolbar,
 .is-mobile .omni-viewer-content .omni-ppt__toolbar,
 .is-mobile .omni-viewer-content .omni-safetensors__toolbar,
+.is-mobile .omni-viewer-content .omni-notebook .omni-notebook__toolbar,
 .is-mobile .omni-viewer-content .omni-latex__toolbar {
     flex-wrap: wrap;
     gap: 8px;
@@ -42,12 +43,22 @@
 }
 
 .is-mobile .omni-viewer-content .omni-latex__preview,
+.is-mobile .omni-viewer-content .omni-notebook__cells,
 .is-mobile .omni-viewer-content .omni-latex__source {
     overscroll-behavior: contain;
 }
 
 .is-mobile .omni-viewer-content .omni-ppt__viewport {
     padding: 10px;
+}
+
+.is-mobile .omni-viewer-content .omni-viewer--notebook .omni-notebook.omni-viewer {
+    padding: 12px;
+}
+
+.is-mobile .omni-viewer-content .omni-viewer--notebook .omni-notebook input[type="search"] {
+    min-height: 40px;
+    font-size: max(16px, var(--font-ui-small));
 }
 
 .is-mobile .omni-viewer-content .omni-ppt__toolbar {
@@ -145,4 +156,46 @@
     --omni-warning: var(--text-warning);
     --omni-button-secondary-bg: var(--interactive-normal);
     --omni-editor-bg: var(--background-primary);
+}
+
+/* Core's default syntax palette targets dark backgrounds. Keep notebook
+   code readable in Obsidian's light theme, including Markdown code blocks. */
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-comment,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-quote {
+    color: var(--code-comment, #6a737d);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-keyword,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-selector-tag {
+    color: var(--code-keyword, #d73a49);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-string,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-regexp {
+    color: var(--code-string, #032f62);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-number,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-literal {
+    color: var(--code-value, #005cc5);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-title,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-section {
+    color: var(--code-function, #6f42c1);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-type,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-built_in {
+    color: var(--code-function, #e36209);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-attr,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-name {
+    color: var(--code-property, #22863a);
+}
+
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-meta,
+.theme-light .omni-viewer-content .omni-notebook code.hljs .hljs-symbol {
+    color: var(--code-important, #735c0f);
 }
