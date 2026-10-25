@@ -14,5 +14,5 @@ export class Notice {}
 export class Modal {}
 export class FuzzySuggestModal {}
 export class Setting {}
-export const normalizePath = (value) => value.replaceAll('\\', '/');
+export const normalizePath = (value) => value.replaceAll('\\', '/').replace(/\/+/g, '/').replace(/^\/|\/$/g, '') || '/';
 export const requestUrl = () => { throw new Error('Network access is unexpected in viewer tests.'); };

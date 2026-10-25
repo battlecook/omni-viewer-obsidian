@@ -14,8 +14,10 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 | Automotive / measurement | dbc, arxml, a2l, asc, blf, mf4, avro, bag (ROS), db3 (SQLite), reqif, pcap, pcapng, stp/step, h5/hdf5/he5, mat |
 | Web / network | har (HTTP Archive) |
 | Jupyter Notebook | ipynb (nbformat v4) |
+| eBook | epub |
+| XML | xml, xsd, xsl/xslt, wsdl, xlf/xliff, rss, atom, xaml, kml, gpx, resx, csproj, vcxproj, nuspec |
 | Documents | pdf (view + annotate/merge/save), docx/doc, ppt/pptx, hwp/hwpx, psd, md/markdown, tex/latex/ltx |
-| Data / source | safetensors, gguf, onnx, tflite/lite, keras (and Keras HDF5 models saved as h5/hdf5), mlmodel/mlpackage (Core ML), pte (ExecuTorch), json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
+| Data / source | safetensors, gguf, onnx, tflite/lite, keras (and Keras HDF5 models saved as h5/hdf5), mlmodel/mlpackage (Core ML), pte (ExecuTorch), pt2 (PyTorch Export), OpenVINO IR (xml + bin), npy/npz (NumPy), json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
 | GIS | shp (Shapefile) |
 
 ## Features carried over from the vscode extension
@@ -27,7 +29,10 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 - **HAR failure analysis**: filter and sort requests by method, status, resource type, domain, URL, headers, and optional body content; inspect request/response details and page metadata alongside summary metrics and a timing waterfall.
 - **Jupyter Notebook preview**: Markdown and KaTeX math, highlighted code cells, execution counts, saved text/HTML/image/JSON outputs and error tracebacks, attachments and relative vault images, cell search, and source/output visibility controls. Read-only: code and interactive widgets are never executed.
 - **LaTeX structure and math preview**: outline, source editing, tables, theorem blocks, KaTeX formulas, and vault-backed `\\input`/`\\include` resolution. It is a partial preview, not a TeX compiler or typeset PDF.
-- **ML model inspection**: ONNX, TFLite/LiteRT, and Core ML graph topology with searchable operator/tensor/IO tables and node inspection; ExecuTorch program instruction graphs with delegate, value, and segment inspection; Keras layer tables, per-layer configuration, and parameter counts; GGUF metadata, tensor index, and quantization summary read without touching the tensor payload.
+- **ML model inspection**: ONNX, TFLite/LiteRT, and Core ML graph topology with searchable operator/tensor/IO tables and node inspection; ExecuTorch program instruction graphs with delegate, value, and segment inspection; PyTorch Export (`.pt2`) graphs with signatures, weights, constants, and module stacks; OpenVINO IR topologies with constant previews from the neighbouring `.bin`; Keras layer tables, per-layer configuration, and parameter counts; GGUF metadata, tensor index, and quantization summary read without touching the tensor payload.
+- **EPUB reader**: chapter navigation from the book's table of contents, text scaling, footnotes and in-book links, and a book-information panel. Chapters are sanitized before display; scripts in a book never run.
+- **XML inspection**: element tree with attributes and namespaces, the source with the selected element highlighted, XPath copy, and search over names, values, and comments.
+- **NumPy arrays**: `.npy` arrays and `.npz` collections with dtype/shape details and a value grid; object arrays are listed but never unpickled.
 - **Content-signature rerouting**: files whose content doesn't match their extension are opened with the right viewer automatically.
 - **Share**: upload a copy of the selected file to Omni Viewer's external share service (max 10 MB, 5-minute expiry) and copy the share link; open a shared link to download it into the `omni-viewer-shared` vault folder. See the [Privacy Policy](https://omni-viewer-web.web.app/privacy/) for details.
 - Refresh command to re-render the active viewer.
@@ -64,8 +69,8 @@ Enable **Omni Viewer** in Settings → Community plugins. The same bundle runs o
 
 On Obsidian mobile, Omni Viewer uses vault APIs instead of local filesystem paths. Mobile currently supports:
 
-- ZIP/JAR/APK, audio/image/browser-native video, CSV, PDF, HAR, Safetensors, ONNX, TFLite/LiteRT, Keras, Core ML, ExecuTorch, JSON/JSONL, YAML, TOML, DBC
-- Jupyter Notebook, Markdown, LaTeX, Mermaid, PlantUML, Protocol Buffer schemas
+- ZIP/JAR/APK, audio/image/browser-native video, CSV, PDF, HAR, Safetensors, ONNX, TFLite/LiteRT, Keras, Core ML, ExecuTorch, PyTorch Export, OpenVINO IR, NumPy, JSON/JSONL, YAML, TOML, DBC, XML
+- Jupyter Notebook, EPUB, Markdown, LaTeX, Mermaid, PlantUML, Protocol Buffer schemas
 - XLS/XLSX, DOCX, HWP/HWPX, PPT/PPTX
 
 Keras models open as `.keras` archives on mobile. Legacy Keras HDF5 models (`.h5`) rely on content-signature rerouting, which is a desktop-only path. Keras models are read into memory in full, so the 512 MB limit applies on both platforms; a legacy Keras HDF5 model above it stays with the HDF5 viewer, which reads metadata through the filesystem and opens at any size.
@@ -73,6 +78,14 @@ Keras models open as `.keras` archives on mobile. Legacy Keras HDF5 models (`.h5
 A `.mlpackage` is a directory bundle, so Obsidian only opens one that has been archived into a single file; a bare `.mlmodel` opens directly. Core ML models are read into memory in full on both platforms, so the 512 MB limit applies to each encoding.
 
 ExecuTorch programs (`.pte`) are read into memory in full on both platforms, so the 512 MB limit applies; segment payloads (constants, delegate blobs) are located but never decoded. Separate `.ptd` data files are not opened.
+
+PyTorch Export packages (`.pt2`) and NumPy files (`.npy`, `.npz`) are read into memory in full on both platforms, so the 512 MB limit applies. On desktop, a renamed `.npy`, a ZIP holding only `.npy` members, and a ZIP carrying a `torch.export` program are rerouted to these viewers by their contents.
+
+XML documents open in the XML viewer, limited to 64 MB on both platforms. `.arxml` and `.reqif` keep the automotive viewers. XML saved under another viewer's extension (an Excel 2003 XML `.xls`, say) keeps that viewer.
+
+OpenVINO IR shares the `.xml` extension, so an IR is recognized by its `<net>` root: desktop reroutes it to the OpenVINO viewer, and on mobile the XML viewer hands it over (an `.xml` up to 512 MB is read there to find out). A same-named `.bin` in the same folder is read for constant previews and range checks when it is 512 MB or smaller; the topology renders without it.
+
+EPUB books are read into memory in full on both platforms and are limited to 256 MB; chapters and images are inflated on demand. On desktop, an EPUB under another non-archive extension is rerouted by its OCF `mimetype` member; one renamed to `.zip` stays in the archive viewer.
 
 HAR files are read into memory in full on both platforms and are limited to 256 MB. For large captures, the viewer retains up to 20,000 requests and bounded request/response body previews; the core viewer reports when content was truncated.
 

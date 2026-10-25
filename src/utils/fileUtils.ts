@@ -19,7 +19,9 @@ import {
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 import { looksLikeCoremlSpec } from 'omni-viewer-core/parsers/coreml';
-import { looksLikeHar, looksLikeNotebook } from 'omni-viewer-core/registry';
+import { looksLikeHar, looksLikeNotebook, looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { XML_VIEWER_META } from 'omni-viewer-core/viewers/xml';
+import { looksLikePt2Archive } from 'omni-viewer-core/parsers/pt2';
 
 export type OmniViewerViewType =
     | 'omni-viewer.audioViewer'
@@ -42,6 +44,8 @@ export type OmniViewerViewType =
     | 'omni-viewer.pcapngViewer'
     | 'omni-viewer.harViewer'
     | 'omni-viewer.notebookViewer'
+    | 'omni-viewer.xmlViewer'
+    | 'omni-viewer.epubViewer'
     | 'omni-viewer.jsonViewer'
     | 'omni-viewer.yamlViewer'
     | 'omni-viewer.jsonlViewer'
@@ -62,6 +66,9 @@ export type OmniViewerViewType =
     | 'omni-viewer.kerasViewer'
     | 'omni-viewer.coremlViewer'
     | 'omni-viewer.pteViewer'
+    | 'omni-viewer.pt2Viewer'
+    | 'omni-viewer.openvinoViewer'
+    | 'omni-viewer.numpyViewer'
     | 'omni-viewer.hwpViewer'
     | 'omni-viewer.psdViewer'
     | 'omni-viewer.excelViewer'
@@ -83,6 +90,7 @@ export class FileUtils {
      *  step with kerasViewer's own guard. */
     private static readonly MAX_IN_MEMORY_SIZE = 512 * 1024 * 1024;
     private static readonly RAW_AUDIO_EXTENSIONS = new Set(['.pcm']);
+    private static readonly XML_EXTENSIONS = new Set(XML_VIEWER_META.extensions.map(extension => `.${extension}`));
 
     public static async detectViewerType(filePath: string, fallbackViewType?: OmniViewerViewType): Promise<FileViewerDetectionResult> {
         const buffer = await this.readSignatureBuffer(filePath);
@@ -126,7 +134,10 @@ export class FileUtils {
             return this.signatureMatch('omni-viewer.imageViewer', 'Matched the WebP RIFF signature.');
         }
 
-        if (this.isSvg(buffer)) {
+        // The SVG test accepts any `<?xml` document mentioning `<svg` early on,
+        // which an XSLT or KML may well do; an XML extension keeps the XML
+        // viewer, where even a real SVG is still a readable element tree.
+        if (this.isSvg(buffer) && !this.XML_EXTENSIONS.has(ext)) {
             return this.signatureMatch('omni-viewer.imageViewer', 'Matched SVG markup.');
         }
 
@@ -138,7 +149,13 @@ export class FileUtils {
             return this.signatureMatch('omni-viewer.audioViewer', 'Matched the OGG container signature.');
         }
 
-        if (this.hasAsciiPrefix(buffer, 'ID3') || this.isMp3FrameHeader(buffer)) {
+        // The MP3 and ADTS frame-sync tests look at two bytes only, and the
+        // UTF-16LE byte-order mark `FF FE` passes the MP3 one — common for the
+        // Windows XML formats (`.resx`, `.xaml`, Task Scheduler exports), so an
+        // XML extension is not taken by them.
+        const frameSyncAllowed = !this.XML_EXTENSIONS.has(ext);
+
+        if (this.hasAsciiPrefix(buffer, 'ID3') || (frameSyncAllowed && this.isMp3FrameHeader(buffer))) {
             return this.signatureMatch('omni-viewer.audioViewer', 'Matched MP3 frame metadata.');
         }
 
@@ -158,7 +175,7 @@ export class FileUtils {
             return this.signatureMatch('omni-viewer.audioViewer', 'Matched the AMR file header.');
         }
 
-        if (this.isAacAdts(buffer)) {
+        if (frameSyncAllowed && this.isAacAdts(buffer)) {
             return this.signatureMatch('omni-viewer.audioViewer', 'Matched AAC ADTS sync bytes.');
         }
 
@@ -220,6 +237,21 @@ export class FileUtils {
         // inspect keeps whatever its extension gave it.
         if (this.hasAsciiPrefix(buffer.subarray(4), 'ET12') && await this.fitsInMemory(filePath)) {
             return this.signatureMatch('omni-viewer.pteViewer', 'Matched the ExecuTorch program identifier.');
+        }
+
+        // A standalone `.npy` array; an `.npz` is a ZIP and is recognized by its
+        // members further down. The viewer reads the array whole, so one too
+        // large to inspect keeps whatever its extension gave it — falling
+        // through would let the text heuristics read the header's commas as CSV.
+        if (this.matchesBytes(buffer, [0x93, 0x4E, 0x55, 0x4D, 0x50, 0x59])) {
+            if (await this.fitsInMemory(filePath)) {
+                return this.signatureMatch('omni-viewer.numpyViewer', 'Matched the NumPy NPY magic string.');
+            }
+            return {
+                viewType: fallbackViewType ?? null,
+                reason: 'Matched the NumPy NPY magic string, but the array is too large to reroute.',
+                matchedBySignature: false
+            };
         }
 
         if (this.hasAsciiPrefix(buffer, 'LOGG')) {
@@ -310,6 +342,40 @@ export class FileUtils {
                     'omni-viewer.coremlViewer',
                     'Matched a ZIP container carrying the Core ML package extension.'
                 );
+            }
+
+            // Same for `.pt2` and `.npz`, whose extensions already settle it.
+            if (ext === '.pt2') {
+                return this.signatureMatch(
+                    'omni-viewer.pt2Viewer',
+                    'Matched a ZIP container carrying the PyTorch Export extension.'
+                );
+            }
+
+            if (ext === '.npz') {
+                return this.signatureMatch(
+                    'omni-viewer.numpyViewer',
+                    'Matched a ZIP container carrying the NumPy NPZ extension.'
+                );
+            }
+
+            // An EPUB's chapters can sit under any path at all (`word/`, `xl/`),
+            // so it is settled before the member-name checks below. Without the
+            // extension, OCF's stored `mimetype` first member identifies it —
+            // the same check core's container probe makes. Like core, an
+            // archive extension keeps the archive viewer, so a book renamed to
+            // `.zip` to browse its members still opens as an archive.
+            if (ext === '.epub') {
+                return this.signatureMatch(
+                    'omni-viewer.epubViewer',
+                    'Matched a ZIP container carrying the EPUB extension.'
+                );
+            }
+
+            if (this.looksLikeEpubContainer(buffer)) {
+                return this.isArchiveExtension(filePath)
+                    ? this.signatureMatch('omni-viewer.archiveViewer', 'Matched an EPUB container and preserved the archive extension.')
+                    : this.signatureMatch('omni-viewer.epubViewer', 'Matched the EPUB OCF mimetype member.');
             }
 
             const zipType = await this.detectZipBasedViewType(filePath);
@@ -580,6 +646,27 @@ export class FileUtils {
         return this.matchesBytes(buffer, [0x0A, 0x0D, 0x0D, 0x0A]);
     }
 
+    /** OCF requires `mimetype` as the first, stored member, holding
+     *  `application/epub+zip` in clear text, so the local file header at
+     *  offset 0 settles it without reading the central directory. */
+    private static looksLikeEpubContainer(buffer: Buffer): boolean {
+        if (buffer.length < 30 || !this.matchesBytes(buffer, [0x50, 0x4B, 0x03, 0x04])) {
+            return false;
+        }
+
+        const method = buffer.readUInt16LE(8);
+        const size = buffer.readUInt32LE(18);
+        const nameLength = buffer.readUInt16LE(26);
+        const extraLength = buffer.readUInt16LE(28);
+        const dataOffset = 30 + nameLength + extraLength;
+        if (method !== 0 || size === 0 || size > 256 || dataOffset + size > buffer.length) {
+            return false;
+        }
+
+        return buffer.subarray(30, 30 + nameLength).toString('ascii') === 'mimetype'
+            && buffer.subarray(dataOffset, dataOffset + size).toString('ascii').trim() === 'application/epub+zip';
+    }
+
     private static isArchiveExtension(filePath: string): boolean {
         const lowerPath = filePath.toLowerCase();
         return lowerPath.endsWith('.zip')
@@ -808,6 +895,19 @@ export class FileUtils {
             }
 
             const buffer = await fs.promises.readFile(filePath);
+
+            // A `torch.export.save()` package under some other name, recognized
+            // by the same `archive_format` / legacy program marker core uses.
+            // Checked before JSZip, which rejects the archives torch writes
+            // ("expected N records in central dir, got 0"); core reads the
+            // central directory itself.
+            if (looksLikePt2Archive(buffer) && await this.fitsInMemory(filePath)) {
+                return {
+                    viewType: 'omni-viewer.pt2Viewer',
+                    reason: 'Matched a ZIP container with PyTorch Export entries.'
+                };
+            }
+
             const zip = await zipLoader(buffer);
             const names = Object.keys(zip.files);
 
@@ -841,6 +941,17 @@ export class FileUtils {
                 return {
                     viewType: 'omni-viewer.coremlViewer',
                     reason: 'Matched a ZIP container with Core ML package entries.'
+                };
+            }
+
+            // An `.npz` under some other name: every member is an `.npy` array.
+            const fileNames = names.filter(name => !name.endsWith('/'));
+            if (fileNames.length > 0
+                && fileNames.every(name => name.toLowerCase().endsWith('.npy'))
+                && await this.fitsInMemory(filePath)) {
+                return {
+                    viewType: 'omni-viewer.numpyViewer',
+                    reason: 'Matched a ZIP container holding only NumPy arrays.'
                 };
             }
 
@@ -922,6 +1033,31 @@ export class FileUtils {
             return {
                 viewType: 'omni-viewer.notebookViewer',
                 reason: 'Used the Jupyter Notebook extension fallback.',
+                matchedBySignature: false
+            };
+        }
+
+        // OpenVINO IR has no extension of its own (`.xml`), so content is the
+        // only way in; core's sniff demands a lowercase `<net version>` root
+        // with `<layers>`, which no other XML dialect here produces.
+        // Checked before the TOML/CSV heuristics, which XML attributes can trip.
+        if (looksLikeOpenVinoIr(signatureText)) {
+            return {
+                viewType: 'omni-viewer.openvinoViewer',
+                reason: 'Matched an OpenVINO IR network topology.',
+                matchedBySignature: false
+            };
+        }
+
+        // Core's generic XML extensions. Settled before the JSONL/TOML/CSV
+        // heuristics below, which would read attribute commas and `=` signs as
+        // rows and key/value pairs. Like core, an `.xml` stays here whatever
+        // dialect it holds — only an OpenVINO IR leaves, above; `.arxml` and
+        // `.reqif` are not in the list and keep their own viewers.
+        if (this.XML_EXTENSIONS.has(ext)) {
+            return {
+                viewType: 'omni-viewer.xmlViewer',
+                reason: 'Used the XML extension fallback.',
                 matchedBySignature: false
             };
         }

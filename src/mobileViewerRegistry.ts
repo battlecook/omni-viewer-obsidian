@@ -20,8 +20,13 @@ import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
 import { coremlViewer } from './viewers/coremlViewer';
 import { pteViewer } from './viewers/pteViewer';
+import { pt2Viewer } from './viewers/pt2Viewer';
+import { openvinoViewer } from './viewers/openvinoViewer';
+import { numpyViewer } from './viewers/numpyViewer';
 import { harViewer } from './viewers/harViewer';
 import { notebookViewer } from './viewers/notebookViewer';
+import { epubViewer } from './viewers/epubViewer';
+import { xmlViewer } from './viewers/xmlViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
@@ -327,6 +332,7 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     pdfViewer,
     harViewer,
     notebookViewer,
+    xmlViewer,
     jsonViewer,
     jsonlViewer,
     yamlViewer,
@@ -344,8 +350,12 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     kerasViewer,
     coremlViewer,
     pteViewer,
+    pt2Viewer,
+    openvinoViewer,
+    numpyViewer,
     excelViewer,
     mobileWordViewer,
+    epubViewer,
     hwpViewer,
     pptViewer
 ];

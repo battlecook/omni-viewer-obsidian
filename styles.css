@@ -156,6 +156,17 @@
     --omni-warning: var(--text-warning);
     --omni-button-secondary-bg: var(--interactive-normal);
     --omni-editor-bg: var(--background-primary);
+    /* XML viewer: syntax colors, search matches, the selected element's
+       source range and focus row; EPUB viewer: chapter links and body font.
+       Unmapped these keep the core's dark-theme fallbacks. */
+    --omni-syntax-tag: var(--code-tag);
+    --omni-syntax-attr: var(--code-property);
+    --omni-syntax-string: var(--code-string);
+    --omni-match-bg: var(--text-highlight-bg);
+    --omni-range-bg: var(--background-modifier-hover);
+    --omni-focus-bg: var(--text-selection);
+    --omni-link: var(--link-color);
+    --omni-reading-font: var(--font-text);
 }
 
 /* Core's default syntax palette targets dark backgrounds. Keep notebook

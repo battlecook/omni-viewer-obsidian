@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.0] - 2026-10-25
+
+### Added
+- Added a NumPy viewer for `.npy` arrays and `.npz` collections on desktop and mobile, backed by `omni-viewer-core`: dtype, shape and byte-order details, a bounded value grid with slice selection, an array selector for archives, and JSON copy. Object arrays are listed but never unpickled.
+- Added a PyTorch Export viewer for `.pt2` packages written by `torch.export.save()` on desktop and mobile, backed by `omni-viewer-core`: the exported graph with node inspection, searchable node, weight/constant, input/output, module and archive tables, model information, and JSON copy. Only a short preview of each tensor is decoded.
+- Added an OpenVINO IR viewer on desktop and mobile, backed by `omni-viewer-core`: the layer graph including nested bodies, searchable layer, constant and input/output tables, model information, and JSON copy. The same-named `.bin` beside the `.xml` is read for constant previews and range checks when it is 512 MB or smaller; the topology renders without it.
+- OpenVINO IR shares the generic `.xml` extension with the XML viewer, so the OpenVINO viewer claims no extension: desktop reroutes an IR by its `<net>` content, and on mobile, which has no content rerouting, the XML viewer hands an IR over to the OpenVINO renderer with the bytes it has read, so an `.xml` up to the 512 MB OpenVINO limit is accepted there before its root is checked.
+- Added an EPUB (`.epub`) viewer on desktop and mobile, backed by `omni-viewer-core`: chapter navigation from the book's table of contents, text scaling, in-book links and footnotes, and a book-information panel. Chapters are sanitized with DOMPurify before display and scripts never run; external links open through Obsidian. Books are held in memory whole and limited to 256 MB, with chapters and images inflated on demand.
+- Added a generic XML viewer on desktop and mobile, backed by `omni-viewer-core`, for core's XML extensions (`.xml`, `.xsd`, `.xsl`, `.xslt`, `.wsdl`, `.xlf`, `.xliff`, `.rss`, `.atom`, `.xaml`, `.kml`, `.gpx`, `.resx`, `.csproj`, `.vcxproj`, `.nuspec`): element tree, source pane, XPath/value/subtree copy and search, limited to 64 MB. `.arxml` and `.reqif` keep the automotive viewers, and Obsidian now lists `.xml` files without Detect all file extensions.
+- Content-signature rerouting now recognises an EPUB's stored OCF `mimetype` member (an archive extension keeps the archive viewer, and `.epub` wins over the Office member-name checks a book's folders could trip). XML content is not rerouted: like core, which sniffs XML only when no viewer claims the extension, a SpreadsheetML `.xls` keeps the Excel viewer. An XML extension is no longer taken by the SVG check, which matched any `<?xml` document mentioning `<svg`, such as an XSLT, nor by the two-byte MP3/AAC frame-sync tests, which a UTF-16LE byte-order mark passes.
+- Mapped the XML and EPUB viewers' syntax, search-match, selection-range, link and reading-font tokens to the Obsidian theme.
+- Content-signature rerouting now recognises the `\x93NUMPY` magic string, ZIPs holding only `.npy` members, ZIPs carrying a `torch.export` program (`archive_format` or the legacy `serialized_exported_program.json`), and OpenVINO IR `<net>` topologies, so renamed files open in the matching viewer on desktop. NumPy and PyTorch Export files above 512 MB are not rerouted by their contents.
+
+### Build
+- Updated `omni-viewer-core` to 0.20.0.
+- Added EPUB and XML adapter regression tests for core rendering, sanitized chapters, chapter navigation, the mobile OpenVINO hand-off, file detection, file-size limits and render cancellation.
+- Added NumPy, PyTorch Export and OpenVINO adapter regression tests for core rendering, the `.bin` sidecar, file detection, file-size limits, invalid input and render cancellation.
+
 ## [0.10.1] - 2026-10-09
 
 ### Fixed

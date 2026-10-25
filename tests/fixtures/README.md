@@ -8,3 +8,15 @@ delegate, named-data, and mutable-state segments. Payload bytes are test data.
 It contains Markdown/math, code and raw cells, saved text/HTML/PNG/SVG/JSON outputs,
 an error traceback, and an embedded one-pixel PNG. Unsafe HTML, remote image,
 and traversal references verify sanitization and the vault asset boundary.
+
+`arrays.npz` was generated for these tests with NumPy's `np.savez_compressed`:
+a 3×4 float32 `weights` array (`arange(12) / 4`) and an int64 `ids` array
+(`[7, 8, 9]`).
+
+`add.pt2` was generated with PyTorch 2.13.0's documented `torch.export` API from
+a one-op module (`forward(x) = x + 10` on a 5-element float32 input) and saved
+with `torch.export.save`. torch writes ZIPs that JSZip rejects, which the
+detection test relies on.
+
+The NumPy `.npy` arrays and the OpenVINO IR (`.xml` + `.bin`) are synthesized
+inside `numpyPt2Openvino.test.mjs`.

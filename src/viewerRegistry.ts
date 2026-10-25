@@ -39,8 +39,13 @@ import { tfliteViewer } from './viewers/tfliteViewer';
 import { kerasViewer } from './viewers/kerasViewer';
 import { coremlViewer } from './viewers/coremlViewer';
 import { pteViewer } from './viewers/pteViewer';
+import { pt2Viewer } from './viewers/pt2Viewer';
+import { openvinoViewer } from './viewers/openvinoViewer';
+import { numpyViewer } from './viewers/numpyViewer';
 import { harViewer } from './viewers/harViewer';
 import { notebookViewer } from './viewers/notebookViewer';
+import { epubViewer } from './viewers/epubViewer';
+import { xmlViewer } from './viewers/xmlViewer';
 import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
@@ -64,6 +69,7 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     pcapngViewer,
     harViewer,
     notebookViewer,
+    xmlViewer,
     jsonViewer,
     yamlViewer,
     jsonlViewer,
@@ -84,10 +90,14 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     kerasViewer,
     coremlViewer,
     pteViewer,
+    pt2Viewer,
+    openvinoViewer,
+    numpyViewer,
     hwpViewer,
     psdViewer,
     excelViewer,
     wordViewer,
+    epubViewer,
     pdfViewer,
     pptViewer
 ];
