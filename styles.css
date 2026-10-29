@@ -167,6 +167,17 @@
     --omni-focus-bg: var(--text-selection);
     --omni-link: var(--link-color);
     --omni-reading-font: var(--font-text);
+    /* Font/Arrow controls and the offline GeoJSON map. */
+    --omni-input-bg: var(--background-primary);
+    --omni-button-bg: var(--interactive-normal);
+    --omni-accent-fg: var(--text-on-accent);
+    --omni-map-bg: var(--background-secondary);
+    --omni-map-fill: var(--background-modifier-hover);
+    --omni-map-stroke: var(--text-muted);
+    --omni-map-point: var(--interactive-accent);
+    --omni-map-point-border: var(--background-primary);
+    --omni-map-hover: var(--text-highlight-bg);
+    --omni-map-selection: var(--interactive-accent);
 }
 
 /* Core's default syntax palette targets dark backgrounds. Keep notebook

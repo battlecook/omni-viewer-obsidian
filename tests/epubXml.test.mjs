@@ -303,7 +303,7 @@ test('detection routes EPUB containers and XML text', async () => {
         [await write('licensed.svg', `<?xml version="1.0"?>\n<!-- ${'licence '.repeat(400)} -->\n<svg xmlns="http://www.w3.org/2000/svg"/>\n`), 'omni-viewer.imageViewer', 'omni-viewer.imageViewer'],
         // XML content under another viewer's extension keeps that viewer.
         [await write('report.xls', '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"/>\n'), 'omni-viewer.excelViewer', 'omni-viewer.excelViewer'],
-        [await write('page.txt', '<!DOCTYPE html>\n<html><body>a,b,c\nd,e,f\n</body></html>\n'), undefined, 'omni-viewer.csvViewer'],
+        [await write('page.txt', '<!DOCTYPE html>\n<html><body>a,b,c\nd,e,f\n</body></html>\n'), undefined, 'omni-viewer.htmlViewer'],
         [await write('ecu.arxml', '<?xml version="1.0"?>\n<AUTOSAR><AR-PACKAGES><AR-PACKAGE><SHORT-NAME>E</SHORT-NAME></AR-PACKAGE></AR-PACKAGES></AUTOSAR>\n'), 'omni-viewer.arxmlViewer', 'omni-viewer.arxmlViewer'],
         [await write('model.xml', IR_XML), xmlViewer.viewType, openvinoViewer.viewType]
     ];

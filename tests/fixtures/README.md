@@ -20,3 +20,9 @@ detection test relies on.
 
 The NumPy `.npy` arrays and the OpenVINO IR (`.xml` + `.bin`) are synthesized
 inside `numpyPt2Openvino.test.mjs`.
+
+`arrow-lz4.feather.b64` and `arrow-zstd.feather.b64` are synthetic Feather V2
+interoperability fixtures from the MIT-licensed [omni-viewer-core fixture generator](https://github.com/battlecook/omni-viewer-core/blob/main/src/parsers/arrow/__tests__/fixtures/generate.py).
+PyArrow writes three rows with int64, dictionary string, decimal, list and struct
+columns, custom metadata and two record batches using LZ4 or ZSTD compression.
+The Font tests use the KaTeX fonts already installed with this project.

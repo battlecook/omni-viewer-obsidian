@@ -46,6 +46,10 @@ import { harViewer } from './viewers/harViewer';
 import { notebookViewer } from './viewers/notebookViewer';
 import { epubViewer } from './viewers/epubViewer';
 import { xmlViewer } from './viewers/xmlViewer';
+import { htmlViewer } from './viewers/htmlViewer';
+import { fontViewer } from './viewers/fontViewer';
+import { arrowViewer } from './viewers/arrowViewer';
+import { geojsonViewer } from './viewers/geojsonViewer';
 import { latexViewer } from './viewers/latexViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
@@ -70,6 +74,10 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     harViewer,
     notebookViewer,
     xmlViewer,
+    htmlViewer,
+    fontViewer,
+    arrowViewer,
+    geojsonViewer,
     jsonViewer,
     yamlViewer,
     jsonlViewer,

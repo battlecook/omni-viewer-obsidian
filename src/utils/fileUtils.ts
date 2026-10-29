@@ -19,7 +19,8 @@ import {
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 import { looksLikeCoremlSpec } from 'omni-viewer-core/parsers/coreml';
-import { looksLikeHar, looksLikeNotebook, looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { ARROW_VIEWER_DESCRIPTOR, FONT_VIEWER_DESCRIPTOR, CORE_VIEWER_DESCRIPTORS, detectViewer, looksLikeGeoJson, looksLikeHar, looksLikeHtml, looksLikeNotebook, looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { decodeHtmlText, HTML_VIEWER_META } from 'omni-viewer-core/viewers/html';
 import { XML_VIEWER_META } from 'omni-viewer-core/viewers/xml';
 import { looksLikePt2Archive } from 'omni-viewer-core/parsers/pt2';
 
@@ -45,6 +46,10 @@ export type OmniViewerViewType =
     | 'omni-viewer.harViewer'
     | 'omni-viewer.notebookViewer'
     | 'omni-viewer.xmlViewer'
+    | 'omni-viewer.htmlViewer'
+    | 'omni-viewer.fontViewer'
+    | 'omni-viewer.arrowViewer'
+    | 'omni-viewer.geojsonViewer'
     | 'omni-viewer.epubViewer'
     | 'omni-viewer.jsonViewer'
     | 'omni-viewer.yamlViewer'
@@ -91,6 +96,8 @@ export class FileUtils {
     private static readonly MAX_IN_MEMORY_SIZE = 512 * 1024 * 1024;
     private static readonly RAW_AUDIO_EXTENSIONS = new Set(['.pcm']);
     private static readonly XML_EXTENSIONS = new Set(XML_VIEWER_META.extensions.map(extension => `.${extension}`));
+    private static readonly HTML_EXTENSIONS = new Set(HTML_VIEWER_META.extensions.map(extension => `.${extension}`));
+    private static readonly CORE_EXTENSIONS = new Set(CORE_VIEWER_DESCRIPTORS.flatMap(viewer => viewer.extensions.map(extension => `.${extension}`)));
 
     public static async detectViewerType(filePath: string, fallbackViewType?: OmniViewerViewType): Promise<FileViewerDetectionResult> {
         const buffer = await this.readSignatureBuffer(filePath);
@@ -104,6 +111,15 @@ export class FileUtils {
                 reason: 'The file is empty, so the extension fallback was used.',
                 matchedBySignature: false
             };
+        }
+
+        // Reuse core's font magic and conservative Arrow file/stream probe.
+        const binaryViewer = detectViewer('', undefined, [FONT_VIEWER_DESCRIPTOR, ARROW_VIEWER_DESCRIPTOR], buffer);
+        if (binaryViewer.viewerId === 'arrow' || binaryViewer.viewerId === 'font' && this.hasPlausibleFontDirectory(buffer)) {
+            return this.signatureMatch(
+                binaryViewer.viewerId === 'font' ? 'omni-viewer.fontViewer' : 'omni-viewer.arrowViewer',
+                binaryViewer.viewerId === 'font' ? 'Matched a font signature.' : 'Matched an Arrow IPC file or stream.'
+            );
         }
 
         if (this.hasAsciiPrefix(buffer, '%PDF-')) {
@@ -137,7 +153,7 @@ export class FileUtils {
         // The SVG test accepts any `<?xml` document mentioning `<svg` early on,
         // which an XSLT or KML may well do; an XML extension keeps the XML
         // viewer, where even a real SVG is still a readable element tree.
-        if (this.isSvg(buffer) && !this.XML_EXTENSIONS.has(ext)) {
+        if (this.isSvg(buffer) && !this.XML_EXTENSIONS.has(ext) && !this.HTML_EXTENSIONS.has(ext)) {
             return this.signatureMatch('omni-viewer.imageViewer', 'Matched SVG markup.');
         }
 
@@ -150,10 +166,12 @@ export class FileUtils {
         }
 
         // The MP3 and ADTS frame-sync tests look at two bytes only, and the
-        // UTF-16LE byte-order mark `FF FE` passes the MP3 one — common for the
-        // Windows XML formats (`.resx`, `.xaml`, Task Scheduler exports), so an
-        // XML extension is not taken by them.
-        const frameSyncAllowed = !this.XML_EXTENSIONS.has(ext);
+        // UTF-16LE's BOM (`FF FE`) passes the MP3 test. Preserve explicit XML
+        // and HTML extensions, and let recognizable HTML under an unknown
+        // extension reach text detection instead of treating its BOM as audio.
+        const utf16Html = buffer[0] === 0xFF && buffer[1] === 0xFE
+            && !this.CORE_EXTENSIONS.has(ext) && looksLikeHtml(decodeHtmlText(buffer));
+        const frameSyncAllowed = !this.XML_EXTENSIONS.has(ext) && !this.HTML_EXTENSIONS.has(ext) && !utf16Html;
 
         if (this.hasAsciiPrefix(buffer, 'ID3') || (frameSyncAllowed && this.isMp3FrameHeader(buffer))) {
             return this.signatureMatch('omni-viewer.audioViewer', 'Matched MP3 frame metadata.');
@@ -993,7 +1011,60 @@ export class FileUtils {
         return null;
     }
 
+    /** Core's legacy TrueType magic is ASCII `true`, also a JSON/YAML value.
+     *  Verify the bounded header/directory prefix before rerouting text files. */
+    private static hasPlausibleFontDirectory(buffer: Buffer): boolean {
+        const woff = this.hasAsciiPrefix(buffer, 'wOFF');
+        const headerSize = woff ? 44 : 12;
+        const recordSize = woff ? 20 : 16;
+        if (buffer.length < headerSize + recordSize) return false;
+        const count = buffer.readUInt16BE(woff ? 12 : 4);
+        if (count === 0 || count > 4096) return false;
+        const directoryEnd = headerSize + count * recordSize;
+        if (woff && (buffer.readUInt16BE(14) !== 0
+            || buffer.readUInt32BE(8) < directoryEnd
+            || ![0x00010000, 0x4f54544f, 0x74727565].includes(buffer.readUInt32BE(4)))) return false;
+
+        const tags = new Set<string>();
+        // A directory can extend past the 64 KB sniff window. Inspect every
+        // complete record available without reading the rest of the file.
+        for (let index = 0; index < count; index++) {
+            const entry = headerSize + index * recordSize;
+            if (entry + recordSize > buffer.length) break;
+            const tag = buffer.subarray(entry, entry + 4).toString('latin1');
+            if (!/^[\x20-\x7e]{4}$/.test(tag) || tags.has(tag)) return false;
+            tags.add(tag);
+            const offset = buffer.readUInt32BE(entry + (woff ? 4 : 8));
+            const length = buffer.readUInt32BE(entry + (woff ? 8 : 12));
+            if (offset < directoryEnd || (woff && (length > buffer.readUInt32BE(entry + 12)
+                || offset + length > buffer.readUInt32BE(8)))) return false;
+        }
+        return true;
+    }
+
     private static detectTextBasedViewType(buffer: Buffer, ext: string): FileViewerDetectionResult | null {
+        // Explicit new-format extensions must survive malformed input and
+        // generic JSON/CSV/TOML heuristics, even without a caller fallback.
+        const explicitViewer = ext === '.geojson' ? 'omni-viewer.geojsonViewer'
+            : ARROW_VIEWER_DESCRIPTOR.extensions.some(extension => ext === `.${extension}`) ? 'omni-viewer.arrowViewer'
+            : FONT_VIEWER_DESCRIPTOR.extensions.some(extension => ext === `.${extension}`) ? 'omni-viewer.fontViewer'
+            : null;
+        if (explicitViewer) {
+            return { viewType: explicitViewer, reason: 'Used the format extension fallback.', matchedBySignature: false };
+        }
+
+        // Keep fragments and malformed HTML with their explicit viewer. For
+        // unknown extensions, use core's document sniff before CSV/TOML can
+        // mistake HTML text or attributes for structured data.
+        const htmlExtension = this.HTML_EXTENSIONS.has(ext);
+        if (htmlExtension || (!this.CORE_EXTENSIONS.has(ext) && looksLikeHtml(decodeHtmlText(buffer)))) {
+            return {
+                viewType: 'omni-viewer.htmlViewer',
+                reason: htmlExtension ? 'Used the HTML extension fallback.' : 'Matched an HTML document.',
+                matchedBySignature: false
+            };
+        }
+
         const sample = buffer.subarray(0, 16 * 1024).toString('utf8');
         // Structured JSON formats can legally put their identifying keys after
         // large metadata objects. Structured JSON sniffing uses the complete
@@ -1091,6 +1162,14 @@ export class FileUtils {
             return {
                 viewType: 'omni-viewer.notebookViewer',
                 reason: 'Matched a Jupyter Notebook v4 document.',
+                matchedBySignature: false
+            };
+        }
+
+        if ((ext === '.json' || !this.CORE_EXTENSIONS.has(ext)) && looksLikeGeoJson(signatureText)) {
+            return {
+                viewType: 'omni-viewer.geojsonViewer',
+                reason: 'Matched GeoJSON geometry or feature content.',
                 matchedBySignature: false
             };
         }

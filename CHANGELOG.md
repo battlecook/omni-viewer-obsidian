@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.12.0] - 2026-10-29
+
+### Added
+- Added Font (`.ttf`, `.otf`, `.woff`), Arrow IPC / Feather V2 (`.arrow`, `.feather`), and GeoJSON (`.geojson`) viewers on desktop and mobile, backed by `omni-viewer-core` 0.22.0.
+- Font inspection includes local specimens, sample text/size/variable-axis controls, Unicode search, paginated glyphs, and metadata/license details, with a 64 MB input cap and font cleanup when the view closes.
+- Arrow inspection includes searchable/sortable/paginated tables, schema and metadata, JSON preview, clipboard copy, and vault JSON export. Bundled Apache Arrow and LZ4/ZSTD decoders work offline; whole-file reads are capped at 256 MB and previews at 10,000 rows.
+- GeoJSON inspection includes an offline SVG map, feature properties, polygon holes, pan/zoom and keyboard controls, with a 64 MB input cap. Desktop recognizes GeoJSON before generic JSON and detects font and Arrow file/stream signatures under renamed files.
+- Added an HTML (`.html`, `.htm`) viewer on desktop and mobile using `omni-viewer-core`, with sandboxed preview and read-only source tabs, inline styles and embedded images, and charset detection. Scripts, external resources, navigation and active embedded content are blocked. Files above 8 MB or with dense markup use a bounded source view; vault reads are limited to 64 MB.
+- Recognize HTML documents under unknown extensions on desktop before generic text heuristics, while preserving other viewers' extensions and preventing UTF-16 HTML from being mistaken for audio.
+
+### Build
+- Updated `omni-viewer-core` from 0.20.0 to 0.22.0.
+- Added Font, Arrow/Feather, and GeoJSON adapter tests covering real font data and compressed PyArrow fixtures, viewer controls, clipboard/export, detection, input limits, render cancellation, and disposal.
+
+### Fixed
+- Validate font headers and table-directory prefixes before content rerouting so JSON, YAML, and CSV text beginning with `true` is not mistaken for a legacy TrueType font.
+
 ## [0.11.0] - 2026-10-25
 
 ### Added

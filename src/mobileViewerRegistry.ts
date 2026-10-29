@@ -27,6 +27,10 @@ import { harViewer } from './viewers/harViewer';
 import { notebookViewer } from './viewers/notebookViewer';
 import { epubViewer } from './viewers/epubViewer';
 import { xmlViewer } from './viewers/xmlViewer';
+import { htmlViewer } from './viewers/htmlViewer';
+import { fontViewer } from './viewers/fontViewer';
+import { arrowViewer } from './viewers/arrowViewer';
+import { geojsonViewer } from './viewers/geojsonViewer';
 import { tomlViewer } from './viewers/tomlViewer';
 import { mermaidViewer, plantumlViewer } from './viewers/sourceDiagramViewers';
 import { mobileWordViewer } from './viewers/wordViewer';
@@ -333,6 +337,10 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     harViewer,
     notebookViewer,
     xmlViewer,
+    htmlViewer,
+    fontViewer,
+    arrowViewer,
+    geojsonViewer,
     jsonViewer,
     jsonlViewer,
     yamlViewer,

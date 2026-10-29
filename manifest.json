@@ -1,7 +1,7 @@
 {
   "id": "omni-viewer",
   "name": "Omni Viewer",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "minAppVersion": "1.4.0",
   "description": "Preview media, archives, office documents, PDFs, EPUB, HWP, Jupyter notebooks, LaTeX, PSD, parquet, Safetensors, GGUF, ONNX, TFLite, Keras, Core ML, ExecuTorch, Shapefile, HDF5, MAT, JSONL, YAML, TOML, Mermaid, PlantUML, and automotive files.",
   "author": "battlecook",
