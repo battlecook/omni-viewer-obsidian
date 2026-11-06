@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.13.1] - 2026-11-07
+
+### Fixed
+- Replaced the core vault viewer's direct overflow style assignment with a CSS class, resolving the Obsidian review `obsidianmd/no-static-styles-assignment` error while preserving scrolling.
+
 ## [0.13.0] - 2026-11-07
 
 ### Added

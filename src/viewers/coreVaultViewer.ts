@@ -49,7 +49,7 @@ export function createCoreVaultViewer(options: {
         }
         const container = ctx.host.provideDomContainer!();
         // Mesh/email surfaces can exceed the pane height on small screens.
-        container.style.overflow = 'auto';
+        container.classList.add('omni-viewer-vault-container');
         const handle = await options.mount(
             { fileName: ctx.fileName, data: new Uint8Array(buffer), lastModified: ctx.file.stat.mtime },
             container, services, ctx

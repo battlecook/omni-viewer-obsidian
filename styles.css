@@ -3,6 +3,10 @@
     overflow: hidden;
 }
 
+.omni-viewer-vault-container {
+    overflow: auto;
+}
+
 .is-mobile .omni-viewer-content {
     padding-bottom: env(safe-area-inset-bottom);
     touch-action: pan-x pan-y;
