@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.13.0] - 2026-11-07
+
+### Added
+- Added desktop and mobile adapters for the seven viewers introduced in `omni-viewer-core` 0.23.0: literal text (`.txt`), DICOM (`.dcm`, `.dicom`), JUnit XML reports, OpenAPI/Swagger JSON and YAML, EML email, MCAP recordings, and 3D meshes (`.glb`, `.gltf`, `.stl`, `.obj`).
+- Refine JSON/YAML specifications and XML test reports into the OpenAPI and JUnit viewers on both platforms, reusing the bytes already read. Generic JSON/YAML/XML remains available for other documents.
+- Added EML attachment saving into the vault and clipboard services for EML, JUnit, OpenAPI and MCAP. Bundled Three.js and reuse the installed LZ4/ZSTD/YAML dependencies for offline rendering.
+- Resolve glTF buffers and images within the model's vault folder with bounded reads and blob URL cleanup. Models are capped at 128 MB, sidecars at 64 MB each and 256 MB cumulatively.
+- Detect MCAP, DICOM Part 10 and GLB binary signatures, plus JUnit/OpenAPI/EML content. Explicit `.txt` files retain literal text rendering even when their content resembles another format.
+
+### Changed
+- Added an upload confirmation before sharing a file, explaining on-device encryption, the external upload, link access and expiry.
+
+### Build
+- Updated `omni-viewer-core` from 0.22.0 to 0.23.0.
+- Added adapter regression tests for the new formats, offline compressed MCAP parsing, native and compressed DICOM, real Three.js scene loading with a headless renderer, safe vault resources, exports, cancellation, input limits and file detection.
+
+### Fixed
+- Validate GLB container and DICOM file-meta headers before binary rerouting so YAML/CSV beginning with `glTF` and JSON containing `DICM` keep their text viewers.
+
 ## [0.12.0] - 2026-10-29
 
 ### Added

@@ -1,0 +1,44 @@
+From: Product Team <team@example.com>
+To: Reader <reader@example.com>
+Cc: Archive <archive@example.com>
+Subject: =?UTF-8?B?7JWI64WV?= — multipart email
+Date: Thu, 29 Oct 2026 10:30:00 +0900
+Reply-To: support@example.com
+Message-ID: <multipart-demo@example.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="demo-mixed"
+
+This is a MIME message.
+--demo-mixed
+Content-Type: multipart/alternative; boundary="demo-alt"
+
+--demo-alt
+Content-Type: text/plain; charset=utf-8
+
+안녕하세요!
+
+This message has both text and HTML bodies, a local inline image, and a text attachment.
+Switch to Headers or Source to inspect the MIME structure.
+--demo-alt
+Content-Type: multipart/related; boundary="demo-related"
+
+--demo-related
+Content-Type: text/html; charset=utf-8
+
+<!doctype html><html><head><style>body{font:16px/1.7 system-ui,sans-serif;color:#243047;background:#f2f5fa;padding:28px}article{max-width:640px;margin:auto;padding:28px;border-radius:14px;background:white}h1{color:#2563eb;margin-top:0}.tag{font-size:12px;color:#64748b}img{width:24px;height:24px;background:#2563eb;border-radius:50%}</style></head><body><article><p class="tag">OMNI VIEWER · EMAIL PREVIEW</p><h1>안녕하세요!</h1><p>This MIME message includes an HTML body, a plain-text alternative, an inline CID image, and a downloadable attachment.</p><p><img src="cid:demo-logo" alt="Local inline image"> Rendered entirely from the message bytes.</p><p>Use the tabs above to inspect the text, headers, and original source.</p></article></body></html>
+--demo-related
+Content-Type: image/png
+Content-ID: <demo-logo>
+Content-Disposition: inline; filename="logo.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=
+--demo-related--
+--demo-alt--
+--demo-mixed
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: attachment; filename*=UTF-8''%EB%A9%94%EB%AA%A8.txt
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIGxvY2FsIGF0dGFjaG1lbnQuCg==
+--demo-mixed--

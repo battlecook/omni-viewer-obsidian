@@ -3,6 +3,8 @@ import { buildYamlViewerModel } from '../utils/yamlNodeBuilder';
 import { FileUtils } from '../utils/fileUtils';
 import { TemplateUtils } from '../utils/templateUtils';
 import { ViewerDefinition } from '../viewerCore';
+import { looksLikeOpenApiSource } from '../utils/openapiDetection';
+import { openapiViewer } from './openapiViewer';
 
 export const yamlViewer: ViewerDefinition = {
     viewType: 'omni-viewer.yamlViewer',
@@ -19,6 +21,12 @@ export const yamlViewer: ViewerDefinition = {
             fs.promises.readFile(ctx.filePath, 'utf8'),
             FileUtils.getFileSize(ctx.filePath)
         ]);
+        if (ctx.signal?.aborted) return;
+        if (await looksLikeOpenApiSource(source, ctx.file.extension)) {
+            await openapiViewer.renderBytes(ctx, new TextEncoder().encode(source).buffer);
+            return;
+        }
+        if (ctx.signal?.aborted) return;
         const model = buildYamlViewerModel(source, fileSize);
         const html = await TemplateUtils.loadTemplate(ctx.templatesDir, 'yaml/yamlViewer.html', {
             fileName: ctx.fileName,

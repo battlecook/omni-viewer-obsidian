@@ -284,7 +284,7 @@ test('detection routes IR content to OpenVINO and any other .xml to the XML view
     const notes = path.join(tempDir, 'notes.xml');
     await writeFile(notes, fixtures['notes.xml']);
     assert.equal((await FileUtils.detectViewerType(notes, openvinoViewer.viewType)).viewType, 'omni-viewer.xmlViewer');
-    const asText = path.join(tempDir, 'notes.txt');
+    const asText = path.join(tempDir, 'notes.dat');
     await writeFile(asText, fixtures['notes.xml']);
     assert.equal((await FileUtils.detectViewerType(asText, openvinoViewer.viewType)).viewType, 'omni-viewer.csvViewer');
 
@@ -294,7 +294,7 @@ test('detection routes IR content to OpenVINO and any other .xml to the XML view
     const arxmlAsXml = path.join(tempDir, 'ecu.xml');
     await writeFile(arxmlAsXml, autosar);
     assert.equal((await FileUtils.detectViewerType(arxmlAsXml, 'omni-viewer.xmlViewer')).viewType, 'omni-viewer.xmlViewer');
-    const arxmlAsText = path.join(tempDir, 'ecu.txt');
+    const arxmlAsText = path.join(tempDir, 'ecu.dat');
     await writeFile(arxmlAsText, autosar);
     assert.equal((await FileUtils.detectViewerType(arxmlAsText, undefined)).viewType, 'omni-viewer.arxmlViewer');
 });

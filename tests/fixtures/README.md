@@ -26,3 +26,18 @@ interoperability fixtures from the MIT-licensed [omni-viewer-core fixture genera
 PyArrow writes three rows with int64, dictionary string, decimal, list and struct
 columns, custom metadata and two record batches using LZ4 or ZSTD compression.
 The Font tests use the KaTeX fonts already installed with this project.
+
+The 0.23.0 adapter fixtures are synthetic data from the MIT-licensed
+[omni-viewer-core](https://github.com/battlecook/omni-viewer-core) examples and fixture builders:
+
+- `mesh-{obj,stl,gltf,glb}.b64`: the four small models from `examples/mesh/`,
+  encoded as base64. glTF embeds its geometry in a data URI.
+- `multipart.eml`: the offline multipart example with a text attachment and CID image.
+- `sample-{lz4,zstd}.mcap.b64`: built with `src/parsers/mcap/__tests__/fixtures.ts`;
+  a compressed chunk holds a schema, channel and two telemetry messages, followed
+  by metadata and an attachment. LZ4 uses `lz4js.compress`; ZSTD uses the builder's
+  raw-frame encoder. The chunk includes a valid CRC.
+- `synthetic-{native,compressed}.dcm.b64`: built with
+  `src/parsers/dicom/__tests__/fixture.ts`. Native pixels are two 2×2 grayscale
+  frames; the compressed sample has a basic offset table and a synthetic JPEG
+  fragment to exercise metadata-only rendering. No patient data is included.

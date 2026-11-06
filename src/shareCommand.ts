@@ -1,6 +1,6 @@
 import { App, Notice, TFile, normalizePath, requestUrl } from 'obsidian';
 import * as path from './shims/desktopPath';
-import { openExternal, promptText } from './platform';
+import { confirmDialog, openExternal, promptText } from './platform';
 import { decryptShareFile, encryptShareFile, readShareLinkKey } from './utils/shareCrypto';
 
 const SHARE_API_BASE = 'https://omni-viewer-share-624036133562.us-west1.run.app';
@@ -171,6 +171,13 @@ export async function shareFileCommand(app: App, file?: TFile): Promise<void> {
         new Notice('Omni Viewer: file is too large to share (max 10 MB).');
         return;
     }
+
+    const confirmed = await confirmDialog(
+        app,
+        `Share "${target.name}"? The file will be encrypted on your device and uploaded to Omni Viewer's external server to create a share link valid for ${DEFAULT_EXPIRES_IN_MINUTES} minutes. Anyone with the link can view the file.`,
+        'Upload and share'
+    );
+    if (!confirmed) return;
 
     const progressNotice = new Notice(`Omni Viewer: uploading ${target.name}…`, 0);
     try {

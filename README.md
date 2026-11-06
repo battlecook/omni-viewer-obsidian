@@ -12,11 +12,16 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 | Image | jpg, jpeg, png, gif, bmp, webp, svg |
 | Tabular | csv, tsv, xlsx, xls, parquet, arrow/feather (Arrow IPC / Feather V2), jsonl/ndjson/jsonlines |
 | Font | ttf, otf, woff |
-| Automotive / measurement | dbc, arxml, a2l, asc, blf, mf4, avro, bag (ROS), db3 (SQLite), reqif, pcap, pcapng, stp/step, h5/hdf5/he5, mat |
+| Plain text | txt |
+| Medical image | dcm, dicom |
+| Email | eml |
+| 3D mesh | glb, gltf, stl, obj |
+| Automotive / measurement | dbc, arxml, a2l, asc, blf, mf4, avro, bag (ROS), mcap, db3 (SQLite), reqif, pcap, pcapng, stp/step, h5/hdf5/he5, mat |
 | Web / network | html/htm, har (HTTP Archive) |
 | Jupyter Notebook | ipynb (nbformat v4) |
 | eBook | epub |
 | XML | xml, xsd, xsl/xslt, wsdl, xlf/xliff, rss, atom, xaml, kml, gpx, resx, csproj, vcxproj, nuspec |
+| API specification / test report | OpenAPI/Swagger JSON or YAML; JUnit XML |
 | Documents | pdf (view + annotate/merge/save), docx/doc, ppt/pptx, hwp/hwpx, psd, md/markdown, tex/latex/ltx |
 | Data / source | safetensors, gguf, onnx, tflite/lite, keras (and Keras HDF5 models saved as h5/hdf5), mlmodel/mlpackage (Core ML), pte (ExecuTorch), pt2 (PyTorch Export), OpenVINO IR (xml + bin), npy/npz (NumPy), json, yaml/yml, toml, proto, mmd/mermaid, puml/plantuml/iuml |
 | GIS | shp (Shapefile), geojson |
@@ -37,9 +42,16 @@ Obsidian port of the [vscode-omni-viewer](https://github.com/battlecook/vscode-o
 - **Font inspection**: local TTF/OpenType/WOFF specimens, editable sample text, size and variable font axis controls, Unicode character search, paginated glyph previews, and metadata/license details. Fonts are loaded only for the active viewer and released when it closes; WOFF2 and font collections are not supported.
 - **Arrow / Feather tables**: Arrow IPC files and streams, Feather V2 with bundled LZ4/ZSTD decoding, searchable/sortable/paginated tables, schema and custom metadata, JSON preview, TSV/JSON copy, and JSON export into the vault. Preview is bounded to 10,000 rows; files must fit the 256 MB input limit. Feather V1 is not supported.
 - **GeoJSON maps**: offline SVG maps for all seven geometry types, polygon holes, feature selection with property inspection, pan/zoom and keyboard navigation. Font and GeoJSON vault reads are limited to 64 MB.
+- **Plain text**: `.txt` opens as literal text with whitespace preserved, UTF-8 / BOM-aware UTF-16 decoding, soft wrapping, and an 8 MB preview. Vault reads are limited to 64 MB.
+- **DICOM images**: native grayscale/RGB image previews, frame navigation, windowing, inversion, zoom and searchable metadata. Compressed images retain their metadata and show a preview limitation. Input limit: 256 MB.
+- **JUnit reports**: XML reports open with test outcomes, suite/status/search filters, failure traces and output, copy support, and report source. Input limit: 64 MB.
+- **OpenAPI / Swagger**: JSON/YAML specifications open with operations, parameters, local references, requests/responses/examples, authentication, schema inspection and source. Supports Swagger 2.0 and OpenAPI 3.0–3.2; input limit: 10 MB.
+- **Email**: EML headers, decoded text and sandboxed offline HTML, inline CID images, raw source, text copy, and attachment saving into the vault. Input limit: 32 MB.
+- **MCAP recordings**: topics/channels, schemas, message samples with text/hex payloads, metadata, attachments and chunks, with offline LZ4/ZSTD decoding, filters and JSON copy. Input limit: 256 MB.
+- **3D meshes**: GLB/glTF 2.0, STL and OBJ with orbit/pan/zoom, fit, wireframe, grid/axes, geometry statistics and glTF animation playback. Requires WebGL. Three.js is bundled; relative buffers/images resolve only inside the model's vault folder. Limits: 128 MB per model, 64 MB per sidecar, 256 MB total sidecars. Extra Draco/KTX2/Meshopt codecs are not bundled.
 - **NumPy arrays**: `.npy` arrays and `.npz` collections with dtype/shape details and a value grid; object arrays are listed but never unpickled.
 - **Content-signature rerouting**: files whose content doesn't match their extension are opened with the right viewer automatically.
-- **Share**: upload a copy of the selected file to Omni Viewer's external share service (max 10 MB, 5-minute expiry) and copy the share link; open a shared link to download it into the `omni-viewer-shared` vault folder. See the [Privacy Policy](https://omni-viewer-web.web.app/privacy/) for details.
+- **Share**: review an upload confirmation, then encrypt a copy of the selected file on your device and upload it to Omni Viewer's external share service (max 10 MB, 5-minute link expiry). Choose **Upload and share** to create and copy the link, or **Cancel** to stop before uploading. Anyone with the link can view the file. Open a shared link to download it into the `omni-viewer-shared` vault folder. See the [Privacy Policy](https://omni-viewer-web.web.app/privacy/) for details.
 - Refresh command to re-render the active viewer.
 
 ## How viewers are activated

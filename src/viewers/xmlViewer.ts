@@ -13,7 +13,8 @@
 
 import { Platform } from 'obsidian';
 import { resolveCatalogMessage } from 'omni-viewer-core/i18n';
-import { looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { looksLikeOpenVinoIr, looksLikeJUnit } from 'omni-viewer-core/registry';
+import { decodeHtmlText } from 'omni-viewer-core/viewers/html';
 import {
     mountXmlViewer,
     XML_DEFAULT_MAX_INPUT_BYTES,
@@ -22,6 +23,7 @@ import {
 } from 'omni-viewer-core/viewers/xml';
 import { ViewerDefinition } from '../viewerCore';
 import { renderOpenVinoIr } from './openvinoViewer';
+import { junitViewer } from './junitViewer';
 
 /** Core refuses a document past its 64 MB input cap. */
 const MAX_INPUT_BYTES = XML_DEFAULT_MAX_INPUT_BYTES;
@@ -103,6 +105,10 @@ export const xmlViewer: ViewerDefinition = {
         }
         if (size > MAX_INPUT_BYTES) throw tooLarge(true);
         const data = new Uint8Array(buffer);
+        if (ctx.file.extension.toLowerCase() === 'xml' && looksLikeJUnit(decodeHtmlText(data.subarray(0, IR_SNIFF_BYTES)))) {
+            await junitViewer.renderBytes(ctx, buffer);
+            return;
+        }
 
         const container = ctx.host.provideDomContainer();
         // A document that does not parse is not thrown: core mounts its own

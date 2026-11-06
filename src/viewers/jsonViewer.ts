@@ -13,6 +13,8 @@ import { Platform } from 'obsidian';
 import { showSaveDialog } from '../platform';
 import { saveBinaryBesideFile } from '../utils/vaultFiles';
 import { RenderContext, ViewerDefinition } from '../viewerCore';
+import { looksLikeOpenApiSource } from '../utils/openapiDetection';
+import { openapiViewer } from './openapiViewer';
 
 function toArrayBuffer(data: Uint8Array): ArrayBuffer {
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
@@ -74,10 +76,17 @@ export const jsonViewer: ViewerDefinition = {
         icon: '🧾'
     },
     async render(ctx) {
+        if (ctx.signal?.aborted) return;
         if (!ctx.host.provideDomContainer || !ctx.host.setCoreViewerHandle) {
             throw new Error('Host does not support direct DOM mounting');
         }
         const buffer = await ctx.app.vault.readBinary(ctx.file);
+        if (ctx.signal?.aborted) return;
+        if (await looksLikeOpenApiSource(new TextDecoder().decode(buffer), 'json')) {
+            await openapiViewer.renderBytes(ctx, buffer);
+            return;
+        }
+        if (ctx.signal?.aborted) return;
         const container = ctx.host.provideDomContainer();
         const handle = await mountJsonViewer(
             { fileName: ctx.fileName, data: new Uint8Array(buffer) },

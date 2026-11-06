@@ -19,12 +19,20 @@ import {
 } from './fileUtils/tabular';
 import { readShapefile as readGisShapefile, ShapefileData, ShapefileReadOptions } from './fileUtils/gis';
 import { looksLikeCoremlSpec } from 'omni-viewer-core/parsers/coreml';
-import { ARROW_VIEWER_DESCRIPTOR, FONT_VIEWER_DESCRIPTOR, CORE_VIEWER_DESCRIPTORS, detectViewer, looksLikeGeoJson, looksLikeHar, looksLikeHtml, looksLikeNotebook, looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { ARROW_VIEWER_DESCRIPTOR, FONT_VIEWER_DESCRIPTOR, MCAP_VIEWER_DESCRIPTOR, MESH_VIEWER_DESCRIPTOR, CORE_VIEWER_DESCRIPTORS, detectViewer, looksLikeEml, looksLikeJUnit, looksLikeGeoJson, looksLikeHar, looksLikeHtml, looksLikeNotebook, looksLikeOpenVinoIr } from 'omni-viewer-core/registry';
+import { looksLikeOpenApiSource } from './openapiDetection';
 import { decodeHtmlText, HTML_VIEWER_META } from 'omni-viewer-core/viewers/html';
 import { XML_VIEWER_META } from 'omni-viewer-core/viewers/xml';
 import { looksLikePt2Archive } from 'omni-viewer-core/parsers/pt2';
 
 export type OmniViewerViewType =
+    | 'omni-viewer.textViewer'
+    | 'omni-viewer.dicomViewer'
+    | 'omni-viewer.junitViewer'
+    | 'omni-viewer.openapiViewer'
+    | 'omni-viewer.emlViewer'
+    | 'omni-viewer.mcapViewer'
+    | 'omni-viewer.meshViewer'
     | 'omni-viewer.audioViewer'
     | 'omni-viewer.videoViewer'
     | 'omni-viewer.imageViewer'
@@ -105,6 +113,10 @@ export class FileUtils {
         const bufferLength = buffer.length;
         const preferredOfficeViewType = this.getOfficeViewTypeForExtension(ext);
 
+        // .txt is deliberately literal, even when its text resembles another
+        // supported format. Match core's explicit text-extension routing.
+        if (ext === '.txt') return { viewType: 'omni-viewer.textViewer', reason: 'Used the text extension fallback.', matchedBySignature: false };
+
         if (bufferLength === 0) {
             return {
                 viewType: fallbackViewType ?? null,
@@ -113,8 +125,17 @@ export class FileUtils {
             };
         }
 
-        // Reuse core's font magic and conservative Arrow file/stream probe.
-        const binaryViewer = detectViewer('', undefined, [FONT_VIEWER_DESCRIPTOR, ARROW_VIEWER_DESCRIPTOR], buffer);
+        // Short ASCII markers can also occur in ordinary YAML/CSV/JSON. Only
+        // reroute GLB and DICOM after checking their binary header structure.
+        if (this.hasPlausibleDicomHeader(buffer)) {
+            return this.signatureMatch('omni-viewer.dicomViewer', 'Matched DICOM Part 10 file metadata.');
+        }
+        if (this.hasPlausibleGlbHeader(buffer)) {
+            return this.signatureMatch('omni-viewer.meshViewer', 'Matched a GLB v2 container header.');
+        }
+        // Reuse core's MCAP magic and conservative Arrow file/stream probe.
+        const binaryViewer = detectViewer('', undefined, [MCAP_VIEWER_DESCRIPTOR, FONT_VIEWER_DESCRIPTOR, ARROW_VIEWER_DESCRIPTOR], buffer);
+        if (binaryViewer.viewerId === 'mcap') return this.signatureMatch('omni-viewer.mcapViewer', 'Matched the MCAP signature.');
         if (binaryViewer.viewerId === 'arrow' || binaryViewer.viewerId === 'font' && this.hasPlausibleFontDirectory(buffer)) {
             return this.signatureMatch(
                 binaryViewer.viewerId === 'font' ? 'omni-viewer.fontViewer' : 'omni-viewer.arrowViewer',
@@ -486,7 +507,7 @@ export class FileUtils {
             );
         }
 
-        const textType = this.detectTextBasedViewType(buffer, ext);
+        const textType = await this.detectTextBasedViewType(buffer, ext);
         if (textType) {
             return textType;
         }
@@ -1011,6 +1032,31 @@ export class FileUtils {
         return null;
     }
 
+    private static hasPlausibleGlbHeader(buffer: Buffer): boolean {
+        if (buffer.length < 20 || !this.hasAsciiPrefix(buffer, 'glTF') || buffer.readUInt32LE(4) !== 2) return false;
+        const length = buffer.readUInt32LE(8);
+        const jsonLength = buffer.readUInt32LE(12);
+        return length >= buffer.length && length % 4 === 0
+            && (buffer.length === this.SIGNATURE_READ_SIZE || length === buffer.length)
+            && jsonLength >= 4 && jsonLength % 4 === 0 && jsonLength <= length - 20
+            && buffer.readUInt32LE(16) === 0x4e4f534a;
+    }
+
+    private static hasPlausibleDicomHeader(buffer: Buffer): boolean {
+        // Part 10 starts with arbitrary preamble bytes, then DICM and explicit
+        // VR little-endian group 0002 metadata. A DICM string alone is not enough.
+        if (buffer.length < 140 || !this.hasAsciiPrefix(buffer.subarray(128), 'DICM')
+            || buffer.readUInt16LE(132) !== 2) return false;
+        const vr = buffer.subarray(136, 138).toString('latin1');
+        if (!['UL', 'UI', 'OB', 'SH', 'AE'].includes(vr)) return false;
+        const longVr = vr === 'OB';
+        if (longVr && (buffer.length < 144 || buffer.readUInt16LE(138) !== 0)) return false;
+        const length = longVr ? buffer.readUInt32LE(140) : buffer.readUInt16LE(138);
+        const valueStart = longVr ? 144 : 140;
+        return length % 2 === 0 && length !== 0xffffffff
+            && (buffer.length === this.SIGNATURE_READ_SIZE || length <= buffer.length - valueStart);
+    }
+
     /** Core's legacy TrueType magic is ASCII `true`, also a JSON/YAML value.
      *  Verify the bounded header/directory prefix before rerouting text files. */
     private static hasPlausibleFontDirectory(buffer: Buffer): boolean {
@@ -1042,10 +1088,14 @@ export class FileUtils {
         return true;
     }
 
-    private static detectTextBasedViewType(buffer: Buffer, ext: string): FileViewerDetectionResult | null {
+    private static async detectTextBasedViewType(buffer: Buffer, ext: string): Promise<FileViewerDetectionResult | null> {
         // Explicit new-format extensions must survive malformed input and
         // generic JSON/CSV/TOML heuristics, even without a caller fallback.
         const explicitViewer = ext === '.geojson' ? 'omni-viewer.geojsonViewer'
+            : ext === '.eml' ? 'omni-viewer.emlViewer'
+            : ext === '.mcap' ? 'omni-viewer.mcapViewer'
+            : ext === '.dcm' || ext === '.dicom' ? 'omni-viewer.dicomViewer'
+            : MESH_VIEWER_DESCRIPTOR.extensions.some(extension => ext === `.${extension}`) ? 'omni-viewer.meshViewer'
             : ARROW_VIEWER_DESCRIPTOR.extensions.some(extension => ext === `.${extension}`) ? 'omni-viewer.arrowViewer'
             : FONT_VIEWER_DESCRIPTOR.extensions.some(extension => ext === `.${extension}`) ? 'omni-viewer.fontViewer'
             : null;
@@ -1071,6 +1121,13 @@ export class FileUtils {
         // signature window already read by detectViewerType, while the more
         // permissive text heuristics below stay on their smaller sample.
         const signatureText = buffer.toString('utf8');
+        const unknownExtension = !this.CORE_EXTENSIONS.has(ext);
+        if ((ext === '.xml' || unknownExtension) && looksLikeJUnit(decodeHtmlText(buffer))) {
+            return { viewType: 'omni-viewer.junitViewer', reason: 'Matched a JUnit XML report root.', matchedBySignature: false };
+        }
+        if (unknownExtension && looksLikeEml(signatureText)) {
+            return { viewType: 'omni-viewer.emlViewer', reason: 'Matched email headers and MIME content.', matchedBySignature: false };
+        }
         const lines = sample
             .split(/\r?\n/)
             .map(line => line.trim())
@@ -1172,6 +1229,11 @@ export class FileUtils {
                 reason: 'Matched GeoJSON geometry or feature content.',
                 matchedBySignature: false
             };
+        }
+
+        if ((ext === '.json' || ext === '.yaml' || ext === '.yml' || unknownExtension)
+            && await looksLikeOpenApiSource(signatureText, ext)) {
+            return { viewType: 'omni-viewer.openapiViewer', reason: 'Matched an OpenAPI / Swagger specification.', matchedBySignature: false };
         }
 
         if (ext === '.json' || this.looksLikeJsonDocument(sample)) {

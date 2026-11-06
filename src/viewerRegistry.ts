@@ -51,6 +51,13 @@ import { fontViewer } from './viewers/fontViewer';
 import { arrowViewer } from './viewers/arrowViewer';
 import { geojsonViewer } from './viewers/geojsonViewer';
 import { latexViewer } from './viewers/latexViewer';
+import { textViewer } from './viewers/textViewer';
+import { dicomViewer } from './viewers/dicomViewer';
+import { junitViewer } from './viewers/junitViewer';
+import { openapiViewer } from './viewers/openapiViewer';
+import { emlViewer } from './viewers/emlViewer';
+import { mcapViewer } from './viewers/mcapViewer';
+import { meshViewer } from './viewers/meshViewer';
 
 export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     archiveViewer,
@@ -78,6 +85,13 @@ export const VIEWER_DEFINITIONS: ViewerDefinition[] = [
     fontViewer,
     arrowViewer,
     geojsonViewer,
+    textViewer,
+    dicomViewer,
+    junitViewer,
+    openapiViewer,
+    emlViewer,
+    mcapViewer,
+    meshViewer,
     jsonViewer,
     yamlViewer,
     jsonlViewer,

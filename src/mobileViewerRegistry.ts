@@ -28,6 +28,14 @@ import { notebookViewer } from './viewers/notebookViewer';
 import { epubViewer } from './viewers/epubViewer';
 import { xmlViewer } from './viewers/xmlViewer';
 import { htmlViewer } from './viewers/htmlViewer';
+import { textViewer } from './viewers/textViewer';
+import { dicomViewer } from './viewers/dicomViewer';
+import { junitViewer } from './viewers/junitViewer';
+import { openapiViewer } from './viewers/openapiViewer';
+import { emlViewer } from './viewers/emlViewer';
+import { mcapViewer } from './viewers/mcapViewer';
+import { meshViewer } from './viewers/meshViewer';
+import { looksLikeOpenApiSource } from './utils/openapiDetection';
 import { fontViewer } from './viewers/fontViewer';
 import { arrowViewer } from './viewers/arrowViewer';
 import { geojsonViewer } from './viewers/geojsonViewer';
@@ -91,6 +99,7 @@ function simpleTextViewer(options: {
     template: string;
     variables(source: string, ctx: Parameters<ViewerDefinition['render']>[0]): Record<string, string>;
     editable?: boolean;
+    refine?(source: string, ctx: Parameters<ViewerDefinition['render']>[0]): Promise<boolean>;
 }): ViewerDefinition {
     return {
         viewType: options.viewType,
@@ -104,6 +113,8 @@ function simpleTextViewer(options: {
         },
         async render(ctx) {
             const source = await readText(ctx);
+            if (ctx.signal?.aborted) return;
+            if (options.refine && await options.refine(source, ctx)) return;
             if (options.editable) await saveSourceMessages(ctx);
             const html = await TemplateUtils.loadTemplate(
                 ctx.templatesDir,
@@ -111,7 +122,7 @@ function simpleTextViewer(options: {
                 options.variables(source, ctx),
                 ctx.host
             );
-            ctx.host.setHtml(html);
+            if (!ctx.signal?.aborted) ctx.host.setHtml(html);
         }
     };
 }
@@ -119,6 +130,11 @@ function simpleTextViewer(options: {
 const yamlViewer = simpleTextViewer({
     viewType: 'omni-viewer.yamlViewer', displayName: 'YAML Viewer', extensions: ['yaml', 'yml'], icon: 'file-code',
     template: 'yaml/yamlViewer.html',
+    refine: async (source, ctx) => {
+        if (!await looksLikeOpenApiSource(source, ctx.file.extension)) return false;
+        await openapiViewer.renderBytes(ctx, new TextEncoder().encode(source).buffer);
+        return true;
+    },
     variables: (source, ctx) => ({
         fileName: ctx.fileName,
         yamlModel: TemplateUtils.escapeJsonForHtmlScriptTag(JSON.stringify(buildYamlViewerModel(source, formatBytes(ctx.file.stat.size))))
@@ -341,6 +357,13 @@ export const MOBILE_VIEWER_DEFINITIONS: ViewerDefinition[] = [
     fontViewer,
     arrowViewer,
     geojsonViewer,
+    textViewer,
+    dicomViewer,
+    junitViewer,
+    openapiViewer,
+    emlViewer,
+    mcapViewer,
+    meshViewer,
     jsonViewer,
     jsonlViewer,
     yamlViewer,

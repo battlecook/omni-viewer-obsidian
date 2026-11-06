@@ -178,6 +178,8 @@
     --omni-map-point-border: var(--background-primary);
     --omni-map-hover: var(--text-highlight-bg);
     --omni-map-selection: var(--interactive-accent);
+    --omni-mesh-bg: var(--background-primary);
+    --omni-selected-bg: var(--text-selection);
 }
 
 /* Core's default syntax palette targets dark backgrounds. Keep notebook
